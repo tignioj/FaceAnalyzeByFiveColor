@@ -3,18 +3,11 @@
 '''
 import cv2 as cv
 import math
-import os
 import numpy as np
 import copy
-import pdfkit
-from docx import Document
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.shared import Inches, Pt, RGBColor
-from docx.oxml.ns import qn
-from matplotlib import pyplot as plt
 # from tongueDiagnose import TongueDiagnose
 from const_var import *
-from win32com.client import gencache, constants
+
 
 '''
     基于图片的人脸检测
@@ -23,6 +16,16 @@ from win32com.client import gencache, constants
     minsize 最小可能的对象大小
     maxsize 最大可能的对象大小
 '''
+
+
+class FaceNotFoundException(Exception):
+    """
+    Face not found!
+    """
+
+    def __init__(self, expression, message):
+        self.expression = expression
+        self.message = message
 
 
 def faceDetect(img, flag):
@@ -39,6 +42,9 @@ def faceDetect(img, flag):
                                          minNeighbors=5,
                                          minSize=(100, 100),
                                          flags=cv.CASCADE_SCALE_IMAGE)
+    if len(faces) <= 0:
+        raise FaceNotFoundException(img, "Face Not found on image.")
+
     for (x, y, w, h) in faces:
         # Draw rectangle around the face
         # print(x, y, w, h)
@@ -68,7 +74,7 @@ def faceDetect(img, flag):
         _, skin1 = cv.threshold(cr1, 0, 255, cv.THRESH_TOZERO + cv.THRESH_OTSU)
 
         # 生成结果图片
-        cv.imwrite(OUTPUT_PATH + '\\DiagnoseResult.jpg', img)
+        # cv.imwrite(OUTPUT_PATH + '\\DiagnoseResult.jpg', img)
 
     if flag == 0: return img
     if flag == 1: return color, gloss, img
@@ -120,53 +126,8 @@ def spotDefect(img):
 '''
 
 
-def videoFacedetect():
-    cascPath = OPENCV_CASCADE_PATH + "\\haarcascade_frontalface_default.xml"
-    eyePath = OPENCV_CASCADE_PATH + "\\haarcascade_eye.xml"
-    smilePath = OPENCV_CASCADE_PATH + "\\haarcascade_smile.xml"
-
-    faceCascade = cv.CascadeClassifier(cascPath)
-    eyeCascade = cv.CascadeClassifier(eyePath)
-    smileCascade = cv.CascadeClassifier(smilePath)
-
-    video_capture = cv.VideoCapture(0)
-    while True:
-        # Capture frame-by-frame
-        ret, frame = video_capture.read()
-        img = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        faces = faceCascade.detectMultiScale(img,
-                                             scaleFactor=1.1,
-                                             minNeighbors=5,
-                                             minSize=(30, 30),
-                                             flags=cv.CASCADE_SCALE_IMAGE)
-        for (x, y, w, h) in faces:
-            if w > 50:
-                cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 3)
-                roi_img = img[y:y + h, x:x + w]
-                roi_color = frame[y:y + h, x:x + w]
-
-                smile = smileCascade.detectMultiScale(roi_img,
-                                                      scaleFactor=1.16,
-                                                      minNeighbors=35,
-                                                      minSize=(25, 25),
-                                                      flags=cv.CASCADE_SCALE_IMAGE)
-                for (sx, sy, sw, sh) in smile:
-                    cv.rectangle(roi_color, (sh, sy), (sx + sw, sy + sh), (255, 0, 0))
-                    cv.putText(frame, 'Smile', (x + sx, y + sy), 1, 1, (0, 255, 0), 1)
-
-                eyes = eyeCascade.detectMultiScale(roi_img)
-                for (ex, ey, ew, eh) in eyes:
-                    cv.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
-                    cv.putText(frame, 'Eye', (x + ex, y + ey), 1, 1, (0, 255, 0), 1)
-
-        cv.putText(frame, 'Number of faces: ' + str(len(faces)), (40, 40), 1, 1, (255, 0, 0), 2)
-        # display the resulting frame
-        cv.imshow('Video', frame)
-
-        if cv.waitKey(1) & 0xFF == ord('q'):
-            break
-    video_capture.release()
-    cv.destroyAllWindows()
+def videoFacedetect(frame):
+    pass
 
 
 def face_color(faceskinimage, faceblock):
@@ -252,115 +213,31 @@ def face_gloss_index_pre(single_channel_img, Fxy):
     return gloss_index
 
 
-def CreateDetectResults(face_color, face_gloss):
-    if face_color == '正常': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-    if face_color == '白': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-    if face_color == '黄': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-    if face_color == '赤': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-    if face_color == '青': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-    if face_color == '黑': resultOfSkin = "最近皮肤有点差哦，请注意多休息，可以使用一些护肤品！"
 
-    if face_gloss == '有光泽': resultOfGloss = '如果不是皮肤太油，那就是皮肤太好，羡慕~'
-    if face_gloss == '无光泽': resultOfGloss = '面色红润有光泽，你不想要吗，用一些保湿的护肤品吧！'
-    if face_gloss == '少光泽': resultOfGloss = '皮肤有点光泽，用一点护肤品就更好了。'
-
-    return resultOfSkin, resultOfGloss
-
-
-def txt2pdf(txt_file, pdf_file):
-    # 将字符串生成pdf文件
-    config = pdfkit.configuration(wkhtmltopdf=r"D:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-    options = {'encoding': 'utf-8'}
-    pdfkit.from_file(txt_file, pdf_file, configuration=config, options=options)
-
-
-def pdfCreate(filename, name, sex, face_color, face_gloss, resultOfSkin, resultOfGloss):
-    with open(filename, 'w') as f:
-        # f.write("姓名: %s <br>" %'孙悦')
-        # f.write("性别: %s <br>" %'男')
-        # f.write("面部诊断结果: %s <br>" %'正常')
-        f.write("姓名: %s <br>" % name)
-        f.write("性别: %s <br>" % sex)
-        f.write("您的面部诊断结果: <br>")
-        f.write("&emsp;&emsp; 肤色诊断结果: %s <br>" % face_color)
-        f.write("&emsp;&emsp; 皮肤光泽诊断结果: %s <br>" % face_gloss)
-        f.write("诊断结果分析: <br>&emsp;&emsp; %s <br>" % resultOfSkin)
-        f.write("&emsp;&emsp; %s <br>" % resultOfGloss)
-
-    with open(filename, 'r') as f:
-        txt2pdf(f, 'DetectResults.pdf')
-
-
-def wordCreate(name, gender, faceColor, faceGloss, SkinResults, GlossResults, image):
-    if gender == 1: Gender = '男'
-    if gender == 0: Gender = '女'
-    doc = Document()
-
-    # 标题
-    doc.add_heading()
-    p = doc.add_paragraph()
-    title = p.add_run("面容诊断报告")
-    title.font.name = u'微软雅黑'
-    title._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-    title.font.size = Pt(24)
-    paragraph_format = p.paragraph_format
-    paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-
-    def setFontWord(string):
-        run = doc.add_paragraph()
-        title = run.add_run(string)
-        title.font.name = u'微软雅黑'
-        title._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
-        paragraph_format = run.paragraph_format
-        paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-
-    # 内容
-    setFontWord("姓名： %s" % name)
-    setFontWord("性别： %s" % Gender)
-    setFontWord("面容健康诊断：")
-    setFontWord("    肤色状态：%s" % faceColor)
-    setFontWord("    光泽状态：%s" % faceGloss)
-    doc.add_picture(image, width=Inches(2))
-    setFontWord("面容健康小贴士：")
-    setFontWord("    (1)%s" % SkinResults)
-    setFontWord("    (2)%s" % GlossResults)
-    doc.save(OUTPUT_PATH + '\\FaceDiagnoseResults.docx')
-
-
-def word2pdf(wordfile, pdffile):
-    word = gencache.EnsureDispatch('Word.Application')
-    doc = word.Documents.Open(wordfile, ReadOnly=1)
-    doc.ExportAsFixedFormat(pdffile,
-                            constants.wdExportFormatPDF,
-                            Item=constants.wdExportDocumentWithMarkup,
-                            CreateBookmarks=constants.wdExportCreateHeadingBookmarks)
-    word.Quit(constants.wdDoNotSaveChanges)
-
-
-if __name__ == "__main__":
-    # 输入检测人员信息
-    filename = "faceDetectResults.txt"
-    wordfile = "D:\GitDoc\FaceHealthDetect\FaceDiagnoseResults.docx"
-    pdffile = "D:\GitDoc\FaceHealthDetect" + "\FaceDiagnoseResults.pdf"
-    name = "孙悦"
-    gender = 1
-
-    # 加载图片
-    # img = cv.imread('testYao.jpg', cv.IMREAD_COLOR)
-    # img = cv.imread('testOfC.jpg', cv.IMREAD_COLOR)
-    img = cv.imread('selfieOfSun.jpg', cv.IMREAD_COLOR)
-    # img = cv.imread('InkedselfieOfSun.jpg', cv.IMREAD_COLOR)
-
-    # 显示原始图片
-    # cv.imshow('origin', img)
-    # cv.waitKey(0)
-
-    # 进行人脸检测
-    faceColor, faceGloss, img = faceDetect(img, 1)
-
-    # 根据人脸检测情况和人员信息，生成诊断结果
-    SkinResults, GlossResults = CreateDetectResults(faceColor, faceGloss)
-    # pdfCreate(filename, name, sex, faceColor, faceGloss, SkinResults, GlossResults)
-    image = "DiagnoseResult.jpg"
-    wordCreate(name, gender, faceColor, faceGloss, SkinResults, GlossResults, image)
-    word2pdf(wordfile, pdffile)
+# if __name__ == "__main__":
+#     # 输入检测人员信息
+#     filename = "faceDetectResults.txt"
+#     wordfile = "D:\GitDoc\FaceHealthDetect\FaceDiagnoseResults.docx"
+#     pdffile = "D:\GitDoc\FaceHealthDetect" + "\FaceDiagnoseResults.pdf"
+#     name = "孙悦"
+#     gender = 1
+#
+#     # 加载图片
+#     # img = cv.imread('testYao.jpg', cv.IMREAD_COLOR)
+#     # img = cv.imread('testOfC.jpg', cv.IMREAD_COLOR)
+#     img = cv.imread('selfieOfSun.jpg', cv.IMREAD_COLOR)
+#     # img = cv.imread('InkedselfieOfSun.jpg', cv.IMREAD_COLOR)
+#
+#     # 显示原始图片
+#     # cv.imshow('origin', img)
+#     # cv.waitKey(0)
+#
+#     # 进行人脸检测
+#     faceColor, faceGloss, img = faceDetect(img, 1)
+#
+#     # 根据人脸检测情况和人员信息，生成诊断结果
+#     SkinResults, GlossResults = CreateDetectResults(faceColor, faceGloss)
+#     # pdfCreate(filename, name, sex, faceColor, faceGloss, SkinResults, GlossResults)
+#     image = "DiagnoseResult.jpg"
+#     wordCreate(name, gender, faceColor, faceGloss, SkinResults, GlossResults, image)
+#     word2pdf(wordfile, pdffile)

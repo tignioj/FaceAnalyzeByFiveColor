@@ -6,6 +6,7 @@ import numpy as np
 import imutils
 import matplotlib.pyplot as plt
 from PIL import ImageFont, ImageDraw, Image
+import time
 
 colors = {'blue': (255, 0, 0),
           'green': (0, 255, 0),
@@ -18,6 +19,9 @@ colors = {'blue': (255, 0, 0),
           'gray': (125, 125, 125),
           'rand': np.random.randint(0, high=256, size=(3,)).tolist(), 'dark_gray': (50, 50, 50),
           'light_gray': (220, 220, 220)}
+
+scale = 4
+"视频质量，可以选择1-4，1最高，4最低"
 
 
 # 单个方法抽离出坐标
@@ -167,7 +171,7 @@ def shape_to_np(shape, dtype="int"):
 def putTextCN(clone, coord, name_CN):
     img = clone
     ## Use simsum.ttc to write Chinese.
-    fontpath = "simsun.ttc"  # <== 这里是宋体路径
+    fontpath = "simsun.ttc"
     font_size = 15
     font = ImageFont.truetype(fontpath, font_size)
     img_pil = Image.fromarray(img)
@@ -197,15 +201,26 @@ def main():
 
     # 4. 加载预测关键点模型(68个点)
     predictor = dlib.shape_predictor("../model/face_landmark/shape_predictor_68_face_landmarks.dat")
+    prev_frame_time = 0
+    # used to record the time at which we processed current frame
+    new_frame_time = 0
+    font = cv2.FONT_HERSHEY_SIMPLEX
 
-    while True:
+    while video_capture.isOpened():
         # Grab a single frame of video
         ret, frame = video_capture.read()
 
-        # Resize frame of video to 1/4 size for faster face recognition processing
-        # small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-        small_frame = frame
+        # if video finished or no Video Input
+        if not ret:
+            break
 
+        # Resize frame of video to 1/4 size for faster face recognition processing
+        small_frame = cv2.resize(frame, (0, 0), fx=1 / scale, fy=1 / scale)
+        new_frame_time = time.time()
+
+        fps = 1 / (new_frame_time - prev_frame_time)
+        prev_frame_time = new_frame_time
+        fps = str(fps)
         # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
         rgb_small_frame = small_frame[:, :, ::-1]
 
@@ -213,24 +228,24 @@ def main():
         faces = detector(rgb_small_frame, 1)  # 1代表将图片放大1倍数
         # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
         for (i, face) in enumerate(faces):
-            shape = predictor(frame, face)
+            shape = predictor(rgb_small_frame, face)
             shape = shape_to_np(shape)
-            clone = rgb_small_frame.copy()
             for (nameKey, name_CN) in FACIAL_LANDMARKS_IDXS.items():
-                # array[start: stop:step]
-                (roi, pts, center_point) = getROI(nameKey, shape, clone, face)
-                # 在clone上圈出ROI
-                # for (x, y) in pts:
-                # cv2.circle(clone, (x, y), 1, (0, 0, 255), -1)
-                # cv2.circle(frame, (x, y), 1, (0, 0, 255), -1)
+                (roi, pts, center_point) = getROI(nameKey, shape, frame.copy(), face)
+                pts = scale * np.array(pts)
+                center_point = scale * np.array(center_point)
                 # 根据点画出折线
-                path = [np.array(pts).reshape((-1, 1, 2))]
+                path = [pts.reshape((-1, 1, 2))]
                 cv2.polylines(frame, path, True, (0, 255, 0), 1)
                 # 加上文字
                 frame = putTextCN(frame, center_point, name_CN)
-                # roi = imutils.resize(roi, width=250, inter=cv2.INTER_CUBIC)
+                # roi = imutils.resize(roi, width=200, inter=cv2.INTER_CUBIC)
+                # cv2.imshow(nameKey, roi)
 
+        # puting the FPS count on the frame
+        cv2.putText(frame, "FPS:" + fps, (7, 70), font, 3, (100, 255, 0), 3, cv2.LINE_AA)
         cv2.imshow('Video', frame)
+
         # Hit 'q' on the keyboard to quit!
         if cv2.waitKey(1) & 0xFF == ord('q'):
             video_capture.release()

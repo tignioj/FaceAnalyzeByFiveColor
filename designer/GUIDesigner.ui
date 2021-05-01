@@ -46,7 +46,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap>../../../.designer/images/process1.png</pixmap>
+            <pixmap>images/process1.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -139,7 +139,7 @@
                </property>
                <property name="icon">
                 <iconset>
-                 <normaloff>../../../.designer/images/icons8_save_100px.png</normaloff>../../../.designer/images/icons8_save_100px.png</iconset>
+                 <normaloff>images/icons8_save_100px.png</normaloff>images/icons8_save_100px.png</iconset>
                </property>
                <property name="iconSize">
                 <size>
@@ -185,7 +185,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../../../.designer/images/icons8_face_id_100px.png</normaloff>../../../.designer/images/icons8_face_id_100px.png</iconset>
+            <normaloff>images/icons8_face_id_100px.png</normaloff>images/icons8_face_id_100px.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -331,7 +331,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>../../../.designer/images/GDPUlogo_outline.png</pixmap>
+         <pixmap>images/GDPUlogo_outline.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>false</bool>
@@ -369,12 +369,12 @@
    <addaction name="actionOpenImage"/>
    <addaction name="actionOpenCamera"/>
    <addaction name="actionCloseCamera"/>
-   <addaction name="actionClearImage"/>
+   <addaction name="actionReset"/>
   </widget>
   <action name="actionOpenImage">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/images/icons8_photo_gallery_100px.png</normaloff>../../../.designer/images/icons8_photo_gallery_100px.png</iconset>
+     <normaloff>images/icons8_photo_gallery_100px.png</normaloff>images/icons8_photo_gallery_100px.png</iconset>
    </property>
    <property name="text">
     <string>OpenImage</string>
@@ -386,7 +386,7 @@
   <action name="actionOpenCamera">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/images/icons8_camera_100px.png</normaloff>../../../.designer/images/icons8_camera_100px.png</iconset>
+     <normaloff>images/icons8_camera_100px.png</normaloff>images/icons8_camera_100px.png</iconset>
    </property>
    <property name="text">
     <string>OpenCamera</string>
@@ -398,7 +398,7 @@
   <action name="actionCloseCamera">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/images/icons8_no_camera_32px.png</normaloff>../../../.designer/images/icons8_no_camera_32px.png</iconset>
+     <normaloff>images/icons8_no_camera_32px.png</normaloff>images/icons8_no_camera_32px.png</iconset>
    </property>
    <property name="text">
     <string>CloseCamera</string>
@@ -407,13 +407,13 @@
     <string>关闭摄像头</string>
    </property>
   </action>
-  <action name="actionClearImage">
+  <action name="actionReset">
    <property name="icon">
     <iconset>
-     <normaloff>../../../.designer/images/icons8_delete_48px.png</normaloff>../../../.designer/images/icons8_delete_48px.png</iconset>
+     <normaloff>images/icons8_reset_100px.png</normaloff>images/icons8_reset_100px.png</iconset>
    </property>
    <property name="text">
-    <string>CleanImage</string>
+    <string>ResetWorkSpace</string>
    </property>
    <property name="toolTip">
     <string>清除图像</string>
