@@ -94,7 +94,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.faceDetector = FaceDetect()
         self.CameraTimer = QtCore.QTimer()
         # 摄像头
-        self.CAM_NUM = 0
+        self.CAM_NUM = 1
         self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE  # 0表示无图像，1表示开启摄像头读取图像，2表示打开图像文件
         # self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 后一个参数用来消一个奇怪的warn
         self.cap = None  # 后一个参数用来消一个奇怪的warn
@@ -129,8 +129,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def OpenCamera(self):  # 打开摄像头，启动倒计时
         self.showInfo("开启摄像头")
         if self.CameraTimer.isActive() == False:
-            self.cap = cv2.VideoCapture(0)
-            flag = self.cap.open(self.CAM_NUM)
+            self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+            flag = self.cap.open(self.CAM_NUM, cv2.CAP_DSHOW)
             if flag == False:
                 QtWidgets.QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QtWidgets.QMessageBox.Ok)
             else:
@@ -263,8 +263,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.messageBoxWarning("无图像输入")
             else:
                 if self.Flag_Image == MyWindow.__IMAGE_LABEL_STATE_USING_CAMERA:
-                    self.CloseCamera()
                     flag, self.image = self.cap.read()
+                    self.CloseCamera()
                     try:
                         self.showInfo("正在为您诊断，请耐心等待...")
                         self.showloadingGIF(True)
@@ -295,7 +295,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         "显示常规信息"
         d = QDateTime.currentDateTime()
         s = d.toString("yyyy-MM-dd hh:mm:ss")
-        self.textEdit_Report.setHtml("<b></b>")
+        # self.textEdit_Report.setHtml("<b style='color:black'></b>")
+        self.textEdit_Report.clear()
         # self.textEdit_Report.setHtml("<b>[" + s + "]</b><p style='color:black'><pre>" + text + "</pre></p>")
         self.textEdit_Report.setPlainText("[" + s + "]" + "\n" + text)
 
