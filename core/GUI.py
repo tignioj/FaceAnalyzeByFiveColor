@@ -94,8 +94,10 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.faceDetector = FaceDetect()
         self.CameraTimer = QtCore.QTimer()
         # 摄像头
-        self.CAM_NUM = 1
+        self.CAM_NUM = 0
         self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE  # 0表示无图像，1表示开启摄像头读取图像，2表示打开图像文件
+        # self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 后一个参数用来消一个奇怪的warn
+        self.cap = None  # 后一个参数用来消一个奇怪的warn
 
         # 信息区
         self.UserName = ""
@@ -126,8 +128,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def OpenCamera(self):  # 打开摄像头，启动倒计时
         self.showInfo("开启摄像头")
-        self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # 后一个参数用来消一个奇怪的warn
         if self.CameraTimer.isActive() == False:
+            self.cap = cv2.VideoCapture(0)
             flag = self.cap.open(self.CAM_NUM)
             if flag == False:
                 QtWidgets.QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QtWidgets.QMessageBox.Ok)
@@ -135,9 +137,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.CameraTimer.start(30)
                 self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_USING_CAMERA
         else:
-            self.CameraTimer.stop()
-            self.cap.release()
-            self.label_ShowCamera.clear()
+            self.showError("摄像头已经开启了")
+
 
     def ShowCamera(self):
         self.VideoFlag = MyWindow.__VIDEO_MODE_NORMAL
@@ -151,18 +152,18 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         flag, self.image = self.cap.read()
 
         if self.VideoMode == MyWindow.__VIDEO_MODE_NORMAL:
-            ShowVideo = cv2.resize(self.image, MyWindow.__IMAGE_LABEL_SIZE)
+            currentFrame = cv2.resize(self.image, MyWindow.__IMAGE_LABEL_SIZE)
 
         elif self.VideoMode == MyWindow.__VIDEO_MODE_FACE:
             if self.VideoFlag == MyWindow.__VIDEO_MODE_NORMAL:
                 self.image = cv.resize(self.image, self.__IMAGE_LABEL_SIZE)
-                ShowVideo = self.faceDetector.faceDetectByImg(self.image, 2)
+                currentFrame = self.faceDetector.faceDetectByImg(self.image, 2)
 
         elif self.VideoMode == MyWindow.__VIDEO_MODE_EDGE:
             self.edge = cv2.Canny(self.image, self.EdgeTractThrehold1, self.EdgeTractThrehold2)
-            ShowVideo = cv2.resize(self.edge, MyWindow.__IMAGE_LABEL_SIZE)
+            currentFrame = cv2.resize(self.edge, MyWindow.__IMAGE_LABEL_SIZE)
 
-        showImage = self.nparrayToQPixMap(ShowVideo)
+        showImage = self.nparrayToQPixMap(currentFrame)
         self.label_ShowCamera.setPixmap(showImage)
 
     def nparrayToQPixMap(self, ShowVideo):
@@ -175,18 +176,27 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         showImage = QtGui.QImage(ShowVideo.data, ShowVideo.shape[1], ShowVideo.shape[0], QtGui.QImage.Format_RGB888)
         return QtGui.QPixmap.fromImage(showImage)
 
+    def releaseCamera(self):
+        if self.CameraTimer is not None:
+            if self.CameraTimer.isActive():
+                self.CameraTimer.stop()
+
+        if self.cap is not None:
+            if self.cap.isOpened():
+                self.cap.release()
+                cv2.destroyAllWindows()
+
+        self.label_ShowCamera.clear()
+
     def CloseCamera(self):
         if self.Flag_Image == MyWindow.__IMAGE_LABEL_STATE_NONE:
             self.showError("你没有打开摄像头!")
             return
         else:
-            self.CameraTimer.stop()
-            self.cap.release()
-            self.label_ShowCamera.clear()
+            self.releaseCamera()
             self.label_ShowCamera.setPixmap(QtGui.QPixmap("../images/process1.png"))
             self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE
-
-        self.showError("已关闭摄像头!")
+        self.showInfo("已关闭摄像头!")
 
     def handleFaceDetectResult(self, paramMap):
         self.CameraTimer.stop()
@@ -253,7 +263,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.messageBoxWarning("无图像输入")
             else:
                 if self.Flag_Image == MyWindow.__IMAGE_LABEL_STATE_USING_CAMERA:
-                    self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE
+                    self.CloseCamera()
                     flag, self.image = self.cap.read()
                     try:
                         self.showInfo("正在为您诊断，请耐心等待...")
@@ -310,13 +320,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_USING_FILE
 
     def WorkSpaceReset(self):
-        if self.Flag_Image == MyWindow.__IMAGE_LABEL_STATE_USING_CAMERA:
-            self.CameraTimer.stop()
-            self.cap.release()
-            self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE
-        else:
-            self.textEdit_Report.clear()
-
+        self.releaseCamera()
         self.label_ShowCamera.clear()
         self.reportUtils = None
         self.textEdit_Report.clear()
