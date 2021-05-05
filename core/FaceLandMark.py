@@ -1,142 +1,30 @@
 from collections import OrderedDict
 
+import imutils
+import os
+from entity.ROIEntity import ROIEntity
+from entity.FaceEntity import FaceEntity
 import cv2
 import dlib
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
-
-colors = {'blue': (255, 0, 0),
-          'green': (0, 255, 0),
-          'red': (0, 0, 255),
-          'yellow': (0, 255, 255),
-          'magenta': (255, 0, 255),
-          'cyan': (255, 255, 0),
-          'white': (255, 255, 255),
-          'black': (0, 0, 0),
-          'gray': (125, 125, 125),
-          'rand': np.random.randint(0, high=256, size=(3,)).tolist(), 'dark_gray': (50, 50, 50),
-          'light_gray': (220, 220, 220)}
+from service.ROIService import ROIService
+from core.const_var import *
 
 
-class FaceDetect:
+class __FaceDetect:
     def __init__(self):
-        print("new instance")
-        self._FACIAL_LANDMARKS_IDXS = OrderedDict([
-            ("ting", "庭"),  # 额头上面
-            ("que", "阙"),  # 眉毛中间
-            ("quan_left", "颧左"),  # 眼角旁边
-            ("quan_right", "颧右"),  # 眼角旁边
-            ("ming_tang", "明堂"),  # 鼻头
-            ("jia_left", "颊左"),  # 脸颊左
-            ("jia_right", "颊右"),  # 脸颊右
-            ("chun", "唇部"),  # 脸颊右
-            ("ke", "颏")  # 下巴到下唇中间
-        ])
 
-        self.scale = 1
+        self.__scale = 1
 
         # 3. 调用人脸检测器
         self._detector = dlib.get_frontal_face_detector()
 
+        self.__ROIService = ROIService()
+
         # 4. 加载预测关键点模型(68个点)
-        self._predictor = dlib.shape_predictor("../model/face_landmark/shape_predictor_68_face_landmarks.dat")
-
-    def _getRegionFromCenter(self, centerPoint, size):
-        width = size[0]
-        height = size[1]
-        """
-        从中心点出发, 根据长和宽获得一个矩形坐标
-        :param centerPoint:
-        :param width:
-        :param height:
-        :return:
-        """
-        pts = []
-        width = int(width / 2)
-        height = int(height / 2)
-        pts.append((centerPoint[0] - width, centerPoint[1] + height))  # 左上角
-        pts.append((centerPoint[0] + width, centerPoint[1] + height))  # 右上角
-        pts.append((centerPoint[0] + width, centerPoint[1] - height))  # 右下角
-        pts.append((centerPoint[0] - width, centerPoint[1] - height))  # 左下角
-        return pts
-
-    def _getFaceWH(self, face):
-        return face.bottom() - face.top(), face.right() - face.left()
-
-    # 获取ROI
-    def _getROI(self, name, shape, image, face):
-        pts = []
-        center_point = ()
-        clone = image
-        faceW, faceH = self._getFaceWH(face)
-
-        queSize = (faceW * 0.16, faceH * 0.16)
-        tingSize = (faceW * 0.3, faceH * 0.16)
-        quanSize = (faceW * 0.16, faceH * 0.16)
-        jiaSize = (faceW * 0.16, faceH * 0.16)
-        mingTangSize = (faceW * 0.12, faceH * 0.12)
-        keSize = (faceW * 0.3, faceH * 0.15)
-
-        # cv2.putText(clone, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, colors['rand'], 2)
-        if name == "ting":
-            # 对于庭，我们只获取阙上面50个像素的位置为中心，大小为W:100, H50
-            # 获取阙的中心，并且上移动x像素
-            que_coord = shape[21:23].mean(axis=0)
-            center_point = (int(que_coord[0]), int(que_coord[1] - faceH * 0.15))
-            pts = self._getRegionFromCenter(center_point, tingSize)
-        elif name == "que":  # 阙
-            # 对于阙，我们需要获取21和22点的坐标中点，再截取50*50的像素
-            coord = shape[21:23].mean(axis=0)
-            center_point = (int(coord[0]), int(coord[1]))
-            pts = self._getRegionFromCenter(center_point, queSize)
-            # 构造一个矩形
-        elif name == "quan_left":
-            # 对于左边的颧骨(注意是指实际左边)，需要获取45和14的均值
-            center_point = np.array([shape[45], shape[14]]).mean(axis=0)
-            center_point = (int(center_point[0]), int(center_point[1]))
-            pts = self._getRegionFromCenter(center_point, quanSize)
-            pass
-        elif name == "quan_right":
-            # 对于右边边的颧骨(注意是指实际右边)，需要获取36和2的均值
-            center_point = np.array([shape[36], shape[2]]).mean(axis=0)
-            center_point = (int(center_point[0]), int(center_point[1]))
-            pts = self._getRegionFromCenter(center_point, quanSize)
-            pass
-        elif name == "ming_tang":
-            # 明堂：30点即可
-            center_point = shape[30]
-            center_point = (int(center_point[0]), int(center_point[1]))
-            pts = self._getRegionFromCenter(center_point, mingTangSize)
-        elif name == "jia_left":  # 脸颊左边
-            # 左边脸颊：y取值为鼻头30的y，x取左边眼睛46的x
-            x = shape[46][0]
-            y = shape[30][1]
-            center_point = (int(x), int(y))
-            pts = self._getRegionFromCenter(center_point, jiaSize)
-        elif name == "jia_right":  # 脸颊右边
-            # 左边脸颊：y取值为鼻头30的y，x取右边眼睛41的x
-            x = shape[41][0]
-            y = shape[30][1]
-            center_point = (int(x), int(y))
-            pts = self._getRegionFromCenter(center_point, jiaSize)
-        elif name == "chun":  # 唇部
-            # 唇部直接获取范围 48:68, 这是固定的范围
-            center_point = np.array(shape[48:68]).mean(axis=0)
-            center_point = (int(center_point[0]), int(center_point[1]))
-            pts = shape[48:68]
-        elif name == "ke":  # 颏
-            # 对于颏(ke 四声), 获取57和8的中点
-            center_point = np.array([shape[57], shape[8]]).mean(axis=0)
-            center_point = (int(center_point[0]), int(center_point[1]))
-            pts = self._getRegionFromCenter(center_point, keSize)
-        else:
-            print("unknown name:", name)
-
-        # extract the ROI of the face region as a separate image
-        # 提取点的矩形
-        (x, y, w, h) = cv2.boundingRect(np.array([pts]))
-        roi = image[y:y + h, x:x + w]
-        return (roi, pts, center_point)
+        self._predictor = dlib.shape_predictor(
+            BASE_PATH + "\\model\\face_landmark\\shape_predictor_68_face_landmarks.dat")
 
     def _shape_to_np(self, shape, dtype="int"):
         # initialize the list of (x, y)-coordinates
@@ -152,11 +40,10 @@ class FaceDetect:
 
     def _putTextCN(self, clone, coord, name_CN, face):
         img = clone
-        faceW, faceH = self._getFaceWH(face)
-        ## Use simsum.ttc to write Chinese.
-        fontpath = "simsun.ttc"  # <== 这里是宋体路径
+        faceW = face.bottom() - face.top()
+        # fontpath = "simsun.ttc"  # <== 这里是宋体路径
         font_size = int(round(faceW * 0.1))
-        font = ImageFont.truetype(fontpath, font_size)
+        font = ImageFont.truetype("simsun.ttc", font_size)
         img_pil = Image.fromarray(img)
         draw = ImageDraw.Draw(img_pil)
 
@@ -170,62 +57,125 @@ class FaceDetect:
         if text_y <= 5:
             text_y = 5
         coord = (text_x, text_y)
-        draw.text(coord, name_CN, font=font, fill=colors['green'])
+        draw.text(coord, name_CN, font=font, fill=COLORDICT['green'])
         img = np.array(img_pil)
         return img
 
-    def faceDetectByImg(self, img, scale):
+    def faceDetectRealTime(self, img, scale=1):
+        self.__scale = scale
         copy = img.copy()
-        small_img = cv2.resize(copy, (0, 0), fx=1 / self.scale, fy=1 / self.scale)
-        self.scale = scale
+        small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
         # 6. 人脸检测
         faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
         # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
         for (i, face) in enumerate(faces):
             shape = self._predictor(small_img, face)
             shape = self._shape_to_np(shape)
-
-            for (nameKey, name_CN) in self._FACIAL_LANDMARKS_IDXS.items():
-                (roi, pts, center_point) = self._getROI(nameKey, shape, copy, face)
-                pts = self.scale * np.array(pts)
-                center_point = self.scale * np.array(center_point)
+            for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
+                roiEntity = self.__ROIService.getROI(nameKey, shape, img, face, scale)
                 # 根据点画出折线
-                path = [pts.reshape((-1, 1, 2))]
+                path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
                 cv2.polylines(copy, path, True, (0, 255, 0), 1)
-                # 加上文字
-                copy = self._putTextCN(copy, center_point, name_CN, face)
-                # roi = imutils.resize(roi, width=200, inter=cv2.INTER_CUBIC)
-                # cv2.imshow(nameKey, roi)
-
+                # 加上中文文字: 这个方法特别卡！
+                copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
+                # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
+                # roi = imutils.resize(roiEntity.img, width=200, inter=cv2.INTER_CUBIC)
+                # cv2.imshow(nameKey, roiEntity.img)
             # 画出人脸矩形
             cv2.rectangle(copy, (face.left() * scale, face.top() * scale),
                           (face.right() * scale, face.bottom() * scale), (255, 0, 0), 3, cv2.LINE_AA)
         return copy
 
+    def faceDetectByImg(self, img, scale=1):
+        # todayPath = OUTPUT_PATH + "\\" + getTodayYearMonthDayHourMinSec()
+        # if not os.path.isdir(todayPath):
+        #     os.mkdir(todayPath)
+
+        detectedFaces = []
+        copy = img.copy()
+        self.__scale = scale
+        small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
+        # 6. 人脸检测
+        faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
+        # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
+        for (i, face) in enumerate(faces):
+            # (1. 创建一个实体类
+            fe = FaceEntity(i)
+            # (2. 原始图像
+            fe.srcImg = img
+            shape = self._predictor(small_img, face)
+            # (3. 64个关键点
+            fe.landMark64 = shape
+            shape = self._shape_to_np(shape)
+            for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
+                roiEntity = self.__ROIService.getROI(nameKey, shape, img, face)
+                # (4. ROI
+                fe.landMarkROI.append(roiEntity)
+                # 根据点画出折线
+                path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
+                cv2.polylines(copy, path, True, (0, 255, 0), 1)
+                # 加上文字
+                copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
+                # roi = imutils.resize(roi, width=200, inter=cv2.INTER_CUBIC)
+                # cv2.imshow(nameKey, roi)
+
+            # (5. 人脸矩形
+            left = face.left() * scale
+            top = face.top() * scale
+            right = face.right() * scale
+            bottom = face.bottom() * scale
+            width = right - left
+            height = bottom - top
+
+            fe.xywh = (left, top, width, height)
+
+            fe.rectanglePoint = ((left, top), (right, bottom))
+
+            # (6. 人脸区域图片
+            fe.facePart = fe.srcImg[top:top + height, left:left + width]
+            # cv2.imwrite(todayPath + "\\" + str(fe.num) + ".jpg", fe.facePart)
+
+            # 画出人脸矩形
+            cv2.rectangle(copy, fe.rectanglePoint[0],
+                          fe.rectanglePoint[1], COLORDICT['white'], 3, cv2.LINE_AA)
+            # (7. 添加画出线条的图像
+            fe.drawImg = copy
+
+            detectedFaces.append(fe)
+
+        return detectedFaces
+
+
+# 单例模式
+faceDetection = __FaceDetect()
+
 
 def _testImage():
     img = cv2.imread("../faces/7.jpeg")
-    f = FaceDetect()
-    detected_img = f.faceDetectByImg(img)
-    cv2.imshow("face", detected_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    f = faceDetection
+    faces = f.faceDetectByImg(img)
+    for face in faces:
+        resizedImg = imutils.resize(face.drawImg, width=800, height=800)
+        cv2.imshow("face", resizedImg)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
 def _testVideo():
     video_capture = cv2.VideoCapture(1)
-    f = FaceDetect()
-    while True:
+    f = faceDetection
+    while video_capture.isOpened():
         ret, frame = video_capture.read()
-        detected_img = f.faceDetectByImg(frame, 4)
-        cv2.imshow("face", detected_img)
-        # Hit 'q' on the keyboard to quit!
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            video_capture.release()
-            cv2.destroyAllWindows()
-            break
+        if frame is not None:
+            detected_img = f.faceDetectRealTime(frame)
+            cv2.imshow("face", detected_img)
+            # Hit 'q' on the keyboard to quit!
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                video_capture.release()
+                cv2.destroyAllWindows()
+                break
 
 
 if __name__ == '__main__':
-    # testImage()
-    _testVideo()
+    _testImage()
+    # _testVideo()

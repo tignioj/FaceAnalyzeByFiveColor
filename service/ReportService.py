@@ -5,11 +5,11 @@ from docx.shared import Inches, Pt, RGBColor
 from docx.oxml.ns import qn
 from numpy import doc
 from win32com.client import gencache, constants
-from const_var import *
+from core.const_var import *
 import cv2
 
 
-class ReportUtils:
+class ReportService:
     def __init__(self, username, gender, faceColor, skinResult, glossResult, image):
         self.username = username
         self.gender = gender
@@ -18,22 +18,13 @@ class ReportUtils:
         self.glossResult = glossResult
         self.image = image
 
-        self.reportMap = {
-            'username': self.username,
-            'gender': self.gender,
-            'faceColor': self.faceColor,
-            'skinResult': self.skinResult,
-            'glossResult': self.glossResult,
-            'image': self.image
-        }
         self.imgPath = OUTPUT_PATH + '\\DiagnoseResult.jpg'
 
     def getImageStream(self):
         success, encoded_image = cv2.imencode('.jpg', self.image)
         return encoded_image.tobytes()
 
-    def getReportMap(self):
-        return self.reportMap
+
 
     def wordCreate(self):
         cv2.imwrite(self.imgPath, self.image)
@@ -43,7 +34,7 @@ class ReportUtils:
         doc.add_heading()
         p = doc.add_paragraph()
         title = p.add_run("面容诊断报告")
-        title.font.name = u'微软雅黑'
+        title.font.roiName = u'微软雅黑'
         title._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
         title.font.size = Pt(24)
         paragraph_format = p.paragraph_format
@@ -52,7 +43,7 @@ class ReportUtils:
         def setFontWord(string):
             run = doc.add_paragraph()
             title = run.add_run(string)
-            title.font.name = u'微软雅黑'
+            title.font.roiName = u'微软雅黑'
             title._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
             paragraph_format = run.paragraph_format
             paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT

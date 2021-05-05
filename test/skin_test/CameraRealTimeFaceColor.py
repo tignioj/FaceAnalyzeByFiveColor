@@ -1,10 +1,11 @@
+import re
+
 from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import *
-from FaceLandMark import FaceDetect
+from core.FaceLandMark import faceDetection
 from PyQt5.QtGui import *
 from PyQt5 import *
 import time
-from FaceLandMark import FaceDetect as FaceDetectHOG
 from PyQt5.QtWidgets import *
 import sys
 import cv2
@@ -13,22 +14,23 @@ import cv2
 使用摄像机调用Dlib的HOG检测算法和特征检测算法
 '''
 
+
 class CameraDemo(QMainWindow):
     def __init__(self):
         super(CameraDemo, self).__init__()
-        self.scale = 2
+        self.scale = 8
         "缩放倍数，建议是2"
-
-        self.resize(800, 600)
+        self.resize(1920, 1080)
         self.setWindowTitle('CameraDemo')
         self.initUI()
 
     def faceDetect(self, img):
-        return self.fd.faceDetectByImg(img, self.scale)
+        # return self.fd.faceDetectRealTime(img, self.scale)
+        return self.fd.faceDetectRealTime(img, self.scale)
         # return faceDetectFR(img)
 
     def initUI(self):
-        self.fd = FaceDetectHOG()
+        self.fd = faceDetection
         self.btnOpen = QPushButton('开启摄像头')
         self.btnOpen.clicked.connect(self.openCamera)
         self.CAM_NUM = 1
@@ -51,14 +53,28 @@ class CameraDemo(QMainWindow):
         mainFrame.setLayout(vBox)
         self.setCentralWidget(mainFrame)
 
+        hBox = QHBoxLayout()
+        buttonRGB  = QHBoxLayout(hBox)
+        buttonHSV = QHBoxLayout(hBox)
+        buttonYCrCb = QHBoxLayout(hBox)
+        buttonH = QHBoxLayout(hBox)
+
         # 计算帧速率用
         self.count = 0
         self.prev_frame_time = 0
         self.new_frame_time = 0
+        self.MODE_RGB = 0
+        self.MODE_YCbCr = 0
+        self.MODE_RGB = 0
+        self.MODE_RGB = 0
+
+        self.openCamera()
 
     def updateLabel(self):
         self.count += 1
-        print('更新次数：', self.count)
+        # print('更新次数：', self.count)
+
+
         if self.video_capture.isOpened():
             ret, frame = self.video_capture.read()
             if ret is None:
@@ -68,18 +84,24 @@ class CameraDemo(QMainWindow):
             # Resize frame of video to 1/4 size for faster face recognition processing
             # small_frame = cv2.resize(frame, (0, 0), fx=1 / self.scale, fy=1 / self.scale)
             detected_img = self.faceDetect(frame)
+            # detected_img = fra
             # detected_img = frame
             self.new_frame_time = time.time()
             fps = 1 / (self.new_frame_time - self.prev_frame_time)
             self.prev_frame_time = self.new_frame_time
-            fps = str(fps)
-            cv2.putText(detected_img, "FPS:" + fps, (7, 70), self.font, 3, (100, 255, 0), 3, cv2.LINE_AA)
-            ShowVideo = cv2.cvtColor(detected_img, cv2.COLOR_BGR2RGB)
-            showImage = QtGui.QImage(ShowVideo.data, ShowVideo.shape[1], ShowVideo.shape[0],
+            s = str(frame.shape[1]) + "x" + str(frame.shape[0]) + ",FPS:" + re.sub(r'(.*\.\d{2}).*', r'\1', str(fps))
+            cv2.putText(detected_img, s, (7, 30), self.font, 1, (100, 255, 0), 3, cv2.LINE_AA)
+            self.label.setPixmap(self.nparrayToQPixMap(detected_img))
 
-                                     QtGui.QImage.Format_RGB888)
-
-            self.label.setPixmap(QPixmap.fromImage(showImage))
+    def nparrayToQPixMap(self, ShowVideo):
+        """
+        OpenCV的BGR的数组转换成QPixMap
+        :param ShowVideo:
+        :return:
+        """
+        ShowVideo = cv2.cvtColor(ShowVideo, cv2.COLOR_BGR2RGB)
+        showImage = QtGui.QImage(ShowVideo.data, ShowVideo.shape[1], ShowVideo.shape[0], QtGui.QImage.Format_RGB888)
+        return QtGui.QPixmap.fromImage(showImage)
 
     def closeCamera(self):
         if self.video_capture.isOpened():

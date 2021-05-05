@@ -305,7 +305,7 @@ def wordCreate(name, gender, faceColor, faceGloss, SkinResults, GlossResults, im
     doc.add_heading()
     p = doc.add_paragraph()
     title = p.add_run("面容诊断报告")
-    title.font.name = u'微软雅黑'
+    title.font.roiName = u'微软雅黑'
     title._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
     title.font.size = Pt(24)
     paragraph_format = p.paragraph_format
@@ -314,7 +314,7 @@ def wordCreate(name, gender, faceColor, faceGloss, SkinResults, GlossResults, im
     def setFontWord(string):
         run = doc.add_paragraph()
         title = run.add_run(string)
-        title.font.name = u'微软雅黑'
+        title.font.roiName = u'微软雅黑'
         title._element.rPr.rFonts.set(qn('w:eastAsia'), u'微软雅黑')
         paragraph_format = run.paragraph_format
         paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT

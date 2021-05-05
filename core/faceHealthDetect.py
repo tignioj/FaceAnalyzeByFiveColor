@@ -3,11 +3,14 @@
 '''
 import cv2 as cv
 import math
+import matplotlib.pyplot as plt
+
+import imutils
 import numpy as np
+from FaceLandMark import faceDetection
 import copy
 # from tongueDiagnose import TongueDiagnose
 from const_var import *
-
 
 '''
     基于图片的人脸检测
@@ -28,38 +31,25 @@ class FaceNotFoundException(Exception):
         self.message = message
 
 
-def faceDetect(img, flag):
-    cascPath = OPENCV_CASCADE_PATH + "\\haarcascade_frontalface_default.xml"
-    eyePath = OPENCV_CASCADE_PATH + "\\haarcascade_eye.xml"
-    smilePath = OPENCV_CASCADE_PATH + "\\haarcascade_smile.xml"
+def faceDetect(img):
+    faces = faceDetection.faceDetectByImg(img)
 
-    faceCascade = cv.CascadeClassifier(cascPath)
-    eyeCascade = cv.CascadeClassifier(eyePath)
-    smileCascade = cv.CascadeClassifier(smilePath)
-
-    faces = faceCascade.detectMultiScale(img,
-                                         scaleFactor=1.1,
-                                         minNeighbors=5,
-                                         minSize=(100, 100),
-                                         flags=cv.CASCADE_SCALE_IMAGE)
     if len(faces) <= 0:
         raise FaceNotFoundException(img, "Face Not found on image.")
 
-    for (x, y, w, h) in faces:
-        # Draw rectangle around the face
-        # print(x, y, w, h)
-        cv.rectangle(img, (x, y), (x + w, y + h), (255, 255, 255), 3)
-        face_part = img[y:y + h, x:x + w]
-        cv.imwrite(OUTPUT_PATH + '\\facePart.jpg', face_part)
+    # for (x, y, w, h) in faces:
+    for face in faces:
+        face_part = face.facePart
+        # cv.imwrite(OUTPUT_PATH + '\\facePart.jpg', face_part)
+
+        (x, y, w, h) = face.xywh
 
         # 肤色检测
-        L0, A0, B0, ind, color, gloss, gloss_index = face_color(face_part, face_part)
+        L0, A0, B0, ind, color, gloss, gloss_index = face_color(face_part)
         # print(L0, A0, B0, ind, color, gloss)
 
-        # 斑点检测
-        face_with_spots = spotDefect(face_part)
 
-        img[y:y + h, x:x + w] = face_with_spots
+        # cvShowImg(img)
 
         '''
         使用YCrCb方法进行进行皮肤部分抠图
@@ -73,64 +63,38 @@ def faceDetect(img, flag):
         # _, skin1 = cv.threshold(cr1, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
         _, skin1 = cv.threshold(cr1, 0, 255, cv.THRESH_TOZERO + cv.THRESH_OTSU)
 
-        # 生成结果图片
-        # cv.imwrite(OUTPUT_PATH + '\\DiagnoseResult.jpg', img)
+        # '''
+        # 将肤色在YUV色域的图像和圈出人脸的图像进行展示
+        # '''
+        # plt.figure(figsize=(12, 8))
+        #
+        # ax1 = plt.subplot(2, 3, 1)
+        # plt.imshow(face_part)
+        # ax1.set_title('face')
+        #
+        # ax2 = plt.subplot(2, 3, 2)
+        # plt.imshow(cr1)
+        # ax2.set_title('cr')
+        #
+        # ax3 = plt.subplot(2, 3, 3)
+        # plt.imshow(skin1)
+        # ax3.set_title('skin')
+        #
+        # # 原图需要从BGR色域转为RGB色域
+        # ax4 = plt.subplot2grid((2, 3), (1, 0), colspan=3)
+        # plt.imshow(img)
+        # ax4.set_title('image')
+        #
+        # plt.imshow(img, cmap='gray')  # 显示为灰度图像
+        # plt.show()
 
-    if flag == 0: return img
-    if flag == 1: return color, gloss, img
-
-    '''
-    将肤色在YUV色域的图像和圈出人脸的图像进行展示
-    '''
-    # plt.figure(figsize = (12,8))
-
-    # ax1 = plt.subplot(2, 3, 1)
-    # plt.imshow(face_part)
-    # ax1.set_title('face')
-
-    # ax2 = plt.subplot(2, 3, 2)
-    # plt.imshow(cr1)
-    # ax2.set_title('cr')
-
-    # ax3 = plt.subplot(2, 3, 3)
-    # plt.imshow(skin1)
-    # ax3.set_title('skin')
-
-    # 原图需要从BGR色域转为RGB色域
-    # ax4 = plt.subplot2grid((2, 3), (1, 0), colspan = 3)
-    # plt.imshow(cv.cvtColor(img, cv.COLOR_BGR2RGB))
-    # ax4.set_title('image')
-
-    # plt.imshow(img, cmap = 'gray')    # 显示为灰度图像
-    # plt.show()
-
+    return color, gloss, img
     # return color, gloss, img
     # return img
 
 
-# 斑点检测
-def spotDefect(img):
-    # spot_det = cv.imread("facePart.jpg", -1)
-    spot_det = copy.deepcopy(img)
-    spot_detector = cv.SimpleBlobDetector_create()
-    spotPoints = spot_detector.detect(spot_det)
-    face_with_spots = cv.drawKeypoints(spot_det, spotPoints, np.array([]), (255, 0, 0),
-                                       cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    # cv.imshow('spot', face_with_spots)
-    # cv.waitKey(0)
-    return face_with_spots
 
-
-'''
-    视频中人脸检测
-'''
-
-
-def videoFacedetect(frame):
-    pass
-
-
-def face_color(faceskinimage, faceblock):
+def face_color(faceskinimage):
     """
     面部颜色检测
     :param faceskinimage:
@@ -162,7 +126,7 @@ def face_color(faceskinimage, faceblock):
         if ind == 2: face_color = "黄"
         if ind == 3: face_color = "白"
         if ind == 4: face_color = "正常"
-    gloss_index_temp = round(1.3 * face_gloss_index(faceblock), 2)
+    gloss_index_temp = round(1.3 * face_gloss_index(faceskinimage), 2)
     gloss_index = gloss_index_temp if gloss_index_temp <= 0.98 else 0.98
     if gloss_index >= 0.7:
         gloss = "有光泽"
@@ -213,6 +177,17 @@ def face_gloss_index_pre(single_channel_img, Fxy):
     return gloss_index
 
 
+def cvShowImg(img):
+    img = imutils.resize(img, width=800, height=800)
+    cv.imshow('img', img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    img = cv.imread("../faces/7.jpeg")
+    # cvShowImg(img)
+    faceDetect(img)
 
 # if __name__ == "__main__":
 #     # 输入检测人员信息

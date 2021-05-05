@@ -5,8 +5,10 @@ import dlib, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 # 方法 显示图片
+from core.const_var import COLORDICT
+
+
 def show_image(image, title):
     img_RGB = image[:, :, ::-1]
     plt.title(title)
@@ -30,23 +32,47 @@ def plot_rectangle(image, faces, scale):
 
 detector = dlib.get_frontal_face_detector()
 
+predictor = dlib.shape_predictor("../model/face_landmark/shape_predictor_68_face_landmarks.dat")
 
-def faceDetect(img):
+
+def shape_to_np(shape, dtype="int"):
+    # initialize the list of (x, y)-coordinates
+    coords = np.zeros((shape.num_parts, 2), dtype=dtype)
+
+    # loop over all facial landmarks and convert them
+    # to a 2-tuple of (x, y)-coordinates
+    for i in range(0, shape.num_parts):
+        coords[i] = (shape.part(i).x, shape.part(i).y)
+
+    # return the list of (x, y)-coordinates
+    return coords
+
+
+def faceDetect(img, scale=1):
     # 灰度转换
     # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # small_img = img
+    small_img = cv2.resize(img, (0, 0), fx=1 / scale, fy=1 / scale)
 
     # 调用dlib库中的检测器
-    dets_result = detector(img_rgb, 1)  # 1代表将图片放大1倍数
+    faces = detector(small_img, 1)  # 1代表将图片放大1倍数
+
+    for (i, face) in enumerate(faces):
+        shape = predictor(small_img, face)
+        # shape = shape_to_np(shape)
+        for pt in shape.parts():
+            pt_position = (pt.x * scale, pt.y * scale)
+            cv2.circle(img, pt_position, 1, COLORDICT['red'],
+                       2)
 
     # 给检测出的人脸绘制矩形框
-    # img_result = plot_rectangle(img.copy(), dets_result, scale)
-
-    return dets_result
+    plot_rectangle(img, faces, scale)
+    return img
 
 
 if __name__ == '__main__':
-    res = faceDetect(cv2.imread("../images/7.jpeg"))
+    res = faceDetect(cv2.imread("../faces/7.jpeg"))
     cv2.imshow("hog", res)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
