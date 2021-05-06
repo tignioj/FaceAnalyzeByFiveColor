@@ -7,11 +7,11 @@ class ReportEntity:
         self.gender = gender
         self.faceColor = faceColor
         self.facePart = facePart
-        self.rois = None
-        self.roiRGBs = None
-        self.roiHSVs = None
-        self.roiYCrCb = None
+        self.roiDict = None
+        self.roiRGBDict = None
+        self.roiHSVDict = None
+        self.roiYCrCbDict = None
+        self.roiLabDict = None
         self.drawImg = None
         self.skinResult = skinResult
         self.imgPath = None
-

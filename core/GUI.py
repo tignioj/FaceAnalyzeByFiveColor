@@ -1,12 +1,14 @@
 import re
 import time
+from utils.ImageUtils import *
+from utils.LogUtils import LogUtils
 
 import cv2
 import sys
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
 from service.ReportService import ReportService
 from PyQt5.QtGui import QMovie
-from PyQt5.QtCore import QDir, pyqtSignal, QThread, QSize, QDateTime
+from PyQt5.QtCore import QDir, pyqtSignal, QThread, QSize, QDateTime, QRunnable
 from designer.ReportPageImpl import ReportPageImpl
 # from GUIDesign import *
 from designer.GUIDesigner import *
@@ -60,6 +62,7 @@ class BackendThread:
     def faceDetectInBackground(paramMap):
         detectedFaces = faceDetect(paramMap['image'], 1, paramMap['name'], paramMap['gender'])
         reports = ReportService.generateReports(detectedFaces)
+        LogUtils.log("GUI", 'report generate finished!', len(reports))
         return {'reports': reports}
 
     # 生成报告，有IO操作
@@ -71,6 +74,10 @@ class BackendThread:
             ReportService.wordCreate(face)
             report.wordCreate()
         return {'report', report}
+
+    @staticmethod
+    def fakeFunctionForUpdateUI(paramMap):
+        pass
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -111,6 +118,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         # 图像区
         self.videoMode = MyWindow.__VIDEO_MODE_NORMAL  # 定义图像输出模式
+        self.movie = QMovie("../images/face_scanning.gif")
+        self.defaultImg = QtGui.QPixmap("../images/process1.png")
+        self.img = None
         self.EdgeTractThrehold1 = 50
         self.EdgeTractThrehold2 = self.EdgeTractThrehold1 + 200
         self.prev_frame_time = 0
@@ -162,36 +172,30 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.videoMode = radioButton.videoMode
 
     def openCamera(self):  # 打开摄像头，启动倒计时
+        LogUtils.log("GUI-openCamera", "准备打开摄像头, 更新UI的计时器状态：", self.cameraTimer.isActive())
         if not self.cameraTimer.isActive():
             flag = self.videoCapture.open(self.CAM_NUM)
             if not flag:
                 QtWidgets.QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QtWidgets.QMessageBox.Ok)
             else:
                 self.cameraTimer.start(20)
+                LogUtils.log("GUI-openCamera", "开启更新UI的计时器：", self.cameraTimer.isActive())
                 self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_USING_CAMERA
         else:
             self.showError("摄像头已经开启了！")
 
-    def changeFrameByLableSizeKeepRatio(self, frame):
-        # 如果视频的宽：高 > 显示区域的宽：高，说明应该以视频的宽度作为基准，计算出新的高度
-        frameHeight, frameWidth = frame.shape[0], frame.shape[1]
-        rationFrame = frameWidth / frameHeight
-        rationLabel = self.__IMAGE_LABEL_SIZE[0] / self.__IMAGE_LABEL_SIZE[1]
-
-        if rationFrame > rationLabel:
-            frameHeight = self.__IMAGE_LABEL_SIZE[0]
-            frameWidth = frameHeight / rationFrame
-        else:
-            frameWidth = self.__IMAGE_LABEL_SIZE[1]
-            frameHeight = frameWidth * rationFrame
-
-        return cv2.resize(frame, (int(frameHeight), int(frameWidth)))
-
     def showCamera(self):
         flag, self.image = self.videoCapture.read()
+        if not flag:
+            self.cameraTimer.stop()
+            self.showError("相机未能成功读取到数据")
+            self.releaseCamera()
+            self.Flag_Image = self.__IMAGE_LABEL_STATE_NONE
+
         currentFrame = self.image
 
-        currentFrame = self.changeFrameByLableSizeKeepRatio(currentFrame)
+        currentFrame = changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
+                                                       self.__IMAGE_LABEL_SIZE[1])
         if self.videoMode == self.__VIDEO_MODE_FACE:
             currentFrame = self.faceDetector.faceDetectRealTime(currentFrame, 4)
         elif self.videoMode == self.__VIDEO_MODE_EDGE:
@@ -211,23 +215,27 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.label_ShowCamera.setPixmap(showImage)
 
     def releaseCamera(self):
+        LogUtils.log("GUI", "尝试释放相机")
         if self.cameraTimer is not None:
             if self.cameraTimer.isActive():
                 self.cameraTimer.stop()
+                LogUtils.log("GUI", "你没有打开相机")
 
         if self.videoCapture is not None:
             if self.videoCapture.isOpened():
                 self.videoCapture.release()
-                cv2.destroyAllWindows()
+                LogUtils.log("GUI", "释放成功")
 
         self.label_ShowCamera.clear()
 
     def closeCamera(self):
+        LogUtils.log("GUI", "尝试关闭相机")
         if self.Flag_Image == MyWindow.__IMAGE_LABEL_STATE_NONE:
             self.showError("你没有打开摄像头!")
             return
         else:
             self.releaseCamera()
+            self.showError("关闭成功!")
             self.label_ShowCamera.setPixmap(QtGui.QPixmap("../images/process1.png"))
             self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE
         self.showInfo("已关闭摄像头!")
@@ -239,27 +247,45 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         :return:
         """
         res = paramMap['res']
+        LogUtils.log("GUI", "拿到结果", res)
+
+        self.showInfo("诊断完成!")
         if type(res) is FaceNotFoundException:
             self.showloadingGIF(False)
-            img = self.changeFrameByLableSizeKeepRatio(res.expression)
+            img = changeFrameByLableSizeKeepRatio(res.expression, self.__IMAGE_LABEL_SIZE[0],
+                                                  self.__IMAGE_LABEL_SIZE[1])
             self.label_ShowCamera.setPixmap(nparrayToQPixMap(img))
             self.showError("未能识别到面孔！请重置工作区再试试看。" + str(res.message))
             return
 
         reports = res['reports']
+        r = reports[0]
+
+        img = r.drawImg
+        qimg = changeFrameByLableSizeKeepRatio(img, self.__IMAGE_LABEL_SIZE[0],
+                                               self.__IMAGE_LABEL_SIZE[1])
+        qimg = nparrayToQPixMap(qimg)
+
+        self.label_ShowCamera.setPixmap(qimg)
         self.button_CaptureAnalyse.setEnabled(True)
         self.showloadingGIF(False)
-
         self.reports = reports
         if self.reportPage is None:
             self.reportPage = ReportPageImpl()
-        self.reportPage.loadReports(self.reports)
+            self.reportPage.reportPageSignal.connect(self.reportPageLoaded)
 
+        self.reportPage.loadReports(self.reports)
         self.reportPage.show()
 
+    def reportPageLoaded(self):
+        self.setEnableButton()
 
     def messageBoxWarning(self, msg):
         QtWidgets.QMessageBox.warning(self, 'warning', msg, buttons=QtWidgets.QMessageBox.Ok)
+        self.button_CaptureAnalyse.setEnabled(True)
+
+    def setEnableButton(self):
+        self.showloadingGIF(False)
         self.button_CaptureAnalyse.setEnabled(True)
 
     def analyze(self):  # 要思考未打开摄像头时按下“拍照”的问题
@@ -267,6 +293,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         面容分析gg
         :return:
         """
+        LogUtils.log("log", "分析前预处理...")
         self.button_CaptureAnalyse.setEnabled(False)
         userName = self.lineEdit_UserName.text()
 
@@ -278,7 +305,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             self.messageBoxWarning("无图像输入")
             return
 
+        gender = ""
+        if self.gender is None:
+            gender = "男"
+        else:
+            gender = self.gender
+
         #  开始分析
+        LogUtils.log("GUI", "当前模式为:", self.Flag_Image)
         if self.Flag_Image == self.__IMAGE_LABEL_STATE_USING_CAMERA:
             flag, self.image = self.videoCapture.read()
             self.closeCamera()
@@ -286,7 +320,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.showInfo("正在为您诊断，请耐心等待...")
                 self.showloadingGIF(True)
                 BackendThread.InnerThread(BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
-                                          {'image': self.image, 'name': userName, 'gender': self.gender}
+                                          {'image': self.image, 'name': userName, 'gender': gender}
                                           ).start()
             except FaceNotFoundException as err:
                 self.button_CaptureAnalyse.setEnabled(True)
@@ -297,7 +331,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # faseDetect过程比较长，需要多线程执行, 加载过渡动画动画
             self.showInfo("正在为您诊断，请耐心等待...")
             BackendThread.InnerThread(BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
-                                      {'image': self.image, 'name': userName, 'gender': self.gender}
+                                      {'image': self.image, 'name': userName, 'gender': gender}
                                       ).start()
             self.showloadingGIF(True)
             #  开启后台线程检测
@@ -319,7 +353,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def showloadingGIF(self, isShow):
         self.cameraTimer.stop()
-        self.movie = QMovie("../images/face_scanning.gif")
+
         if isShow:
             self.movie.setScaledSize(QSize(800, 600))
             self.label_ShowCamera.setMovie(self.movie)
@@ -331,7 +365,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         curPath = QDir.currentPath()
         imagePath, imgType = QFileDialog.getOpenFileName(self, "打开图片", curPath,
                                                          " *.jpg;;*.png;;*.jpeg;;*.bmp;;All Files (*)")
-        print(imagePath)
+        LogUtils.log("GUI", "openImage:" + imagePath)
         img = QtGui.QPixmap(imagePath).scaled(self.label_ShowCamera.width(), self.label_ShowCamera.height())
         self.image = cv2.imread(imagePath, cv2.IMREAD_COLOR)
         self.label_ShowCamera.setPixmap(img)
@@ -339,12 +373,20 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def WorkSpaceReset(self):
         self.releaseCamera()
+        self.videoMode = self.__VIDEO_MODE_NORMAL
+        self.Flag_Image = self.__IMAGE_LABEL_STATE_NONE
+        self.reports = None
+        # self.lineEdit_UserName.setText("")
+        self.gender = '男'
+        self.reportPage = None
         self.label_ShowCamera.clear()
         self.reportUtils = None
+        self.radioButton_Male.click()
+        self.radioButton_NormalImage.click()
         self.textEdit_Report.clear()
         self.button_CaptureAnalyse.setEnabled(True)
         self.showInfo("工作区重置成功！")
-        self.label_ShowCamera.setPixmap(QtGui.QPixmap("../images/process1.png"))
+        self.label_ShowCamera.setPixmap(self.defaultImg)
 
     def SliderChangeValue(self):
         self.EdgeTractThrehold1 = self.horizontalSlider_EdgeTract.value()

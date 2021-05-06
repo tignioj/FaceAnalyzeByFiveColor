@@ -32,7 +32,7 @@ def segROIAndSave(name, img):
 
     cv2.imwrite(roiPATH + "\\" + name + "_face_trim.jpg", faceEntity.facePartOnlySkin)
 
-    rois = faceEntity.landMarkROI
+    rois = faceEntity.landMarkROIDict
 
     for roi in rois:
         cv2.imwrite(roiPATH + "\\" + roi.roiName + ".jpg", roi.img)

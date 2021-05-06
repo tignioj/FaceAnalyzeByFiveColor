@@ -2,6 +2,7 @@ import os
 
 import pdfkit
 from docx import Document
+from utils.LogUtils import LogUtils
 from utils.SkinUtils import *
 from utils.SkinUtils import SkinUtils
 from entity.ReportEntity import ReportEntity
@@ -63,6 +64,7 @@ class ReportService:
 
     @staticmethod
     def generateReports(detectedFaces):
+        LogUtils.log("reportService", "start generate report from faces...")
         reports = []
         for face in detectedFaces:
             report = ReportEntity()
@@ -70,25 +72,27 @@ class ReportService:
             report.username = face.name
             report.imgPath = face.imgPath
             report.facePart = face.facePart
-            report.rois = face.landMarkROI
-            report.roisRGB = []
-            report.roisHSV = []
-            report.roisYCrCb = []
-            report.roisLab = []
+            report.roiDict = face.landMarkROIDict
+            report.roiRGBDict = {}
+            report.roiHSVDict = {}
+            report.roiYCrCbDict = {}
+            report.roiLabDict = {}
             fig = plt.figure()
-            for roi in report.rois:
+            LogUtils.log("reportService", "getting roi colorspace...")
+            for (name, roi) in report.roiDict.items():
                 fig.clear()
-                report.roisRGB.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_RGB))
+                report.roiRGBDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_RGB))
                 fig.clear()
-                report.roisHSV.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_HSV))
+                report.roiHSVDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_HSV))
                 fig.clear()
-                report.roisLab.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_Lab))
+                report.roiLabDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_Lab))
                 fig.clear()
-                report.roisYCrCb.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_YCrCb))
+                report.roiYCrCbDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_YCrCb))
             report.drawImg = face.drawImg
+            LogUtils.log("reportService", "getting roi colorspace finished!")
             # report.faceColor = SkinUtils.roiTotalColorDetect(report.rois)
             # report.skinResult = SkinUtils.getResultByColor(report.rois)
-
             reports.append(report)
 
+        LogUtils.log("reportService", "reports generate finished!")
         return reports

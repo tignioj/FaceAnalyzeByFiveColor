@@ -1,10 +1,12 @@
 from collections import OrderedDict
 
 import imutils
+from utils.LogUtils import LogUtils
 import os
 from entity.ROIEntity import ROIEntity
 from entity.FaceEntity import FaceEntity
 from utils.SkinUtils import SkinUtils
+from utils.ImageUtils import cvshow
 import cv2
 import dlib
 import numpy as np
@@ -73,12 +75,13 @@ class __FaceDetect:
             shape = self._predictor(small_img, face)
             shape = self._shape_to_np(shape)
             for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
-                roiEntity = self.__ROIService.getROI(nameKey, shape, img, face, scale)
+                # LogUtils.log("FaceLandMark", "提取ROI..., 图像是否为空:" + str(len(img)))
+                roiEntity = self.__ROIService.getROIRealTime(nameKey, shape, img, face, scale)
                 # 根据点画出折线
                 path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
                 cv2.polylines(copy, path, True, (0, 255, 0), 1)
                 # 加上中文文字: 这个方法特别卡！
-                copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
+                # copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
                 # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
                 # roi = imutils.resize(roiEntity.img, width=200, inter=cv2.INTER_CUBIC)
                 # cv2.imshow(nameKey, roiEntity.img)
@@ -91,11 +94,12 @@ class __FaceDetect:
         # todayPath = OUTPUT_PATH + "\\" + getTodayYearMonthDayHourMinSec()
         # if not os.path.isdir(todayPath):
         #     os.mkdir(todayPath)
+        LogUtils.log("FaceLandMark", "start detect by img")
 
         detectedFaces = []
         copy = img.copy()
         self.__scale = scale
-        p = 1/scale
+        p = 1 / scale
         small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
         # 6. 人脸检测
         faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
@@ -112,9 +116,10 @@ class __FaceDetect:
             fe.landMark64 = shape
             shape = self._shape_to_np(shape)
             for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
+                LogUtils.log("FaceLandMark", "提取ROI'" + name_CN + "...")
                 roiEntity = self.__ROIService.getROI(nameKey, shape, img, face)
                 # (4. ROI
-                fe.landMarkROI.append(roiEntity)
+                fe.landMarkROIDict[nameKey] = roiEntity
                 # 根据点画出折线
                 path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
                 cv2.polylines(copy, path, True, (0, 255, 0), 1)
@@ -146,9 +151,9 @@ class __FaceDetect:
             # (7. 添加画出线条的图像
             fe.drawImg = copy
 
-
             detectedFaces.append(fe)
 
+        LogUtils.log("FaceLandMark", "detected finish! found:", len(detectedFaces))
         return detectedFaces
 
 

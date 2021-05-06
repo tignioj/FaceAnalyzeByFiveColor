@@ -16,7 +16,7 @@ def cs(img, title=None):
     cv2.destroyAllWindows()
 
 
-print(blackImg.landMarkROI)
+print(blackImg.landMarkROIDict)
 cv2.imwrite(OUTPUT_PATH + "\\" + "drawed.jpg", blackImg.drawImg)
 # rd = blackImg.landMarkROI
 
