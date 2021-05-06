@@ -4,6 +4,7 @@ import imutils
 import os
 from entity.ROIEntity import ROIEntity
 from entity.FaceEntity import FaceEntity
+from utils.SkinUtils import SkinUtils
 import cv2
 import dlib
 import numpy as np
@@ -86,7 +87,7 @@ class __FaceDetect:
                           (face.right() * scale, face.bottom() * scale), (255, 0, 0), 3, cv2.LINE_AA)
         return copy
 
-    def faceDetectByImg(self, img, scale=1):
+    def faceDetectByImg(self, img, scale=1, username=None, gender=None):
         # todayPath = OUTPUT_PATH + "\\" + getTodayYearMonthDayHourMinSec()
         # if not os.path.isdir(todayPath):
         #     os.mkdir(todayPath)
@@ -94,6 +95,7 @@ class __FaceDetect:
         detectedFaces = []
         copy = img.copy()
         self.__scale = scale
+        p = 1/scale
         small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
         # 6. 人脸检测
         faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
@@ -101,6 +103,8 @@ class __FaceDetect:
         for (i, face) in enumerate(faces):
             # (1. 创建一个实体类
             fe = FaceEntity(i)
+            fe.gender = gender
+            fe.name = username
             # (2. 原始图像
             fe.srcImg = img
             shape = self._predictor(small_img, face)
@@ -135,11 +139,13 @@ class __FaceDetect:
             fe.facePart = fe.srcImg[top:top + height, left:left + width]
             # cv2.imwrite(todayPath + "\\" + str(fe.num) + ".jpg", fe.facePart)
 
+            fe.facePartOnlySkin = SkinUtils.trimSkin(fe.facePart)
             # 画出人脸矩形
             cv2.rectangle(copy, fe.rectanglePoint[0],
                           fe.rectanglePoint[1], COLORDICT['white'], 3, cv2.LINE_AA)
             # (7. 添加画出线条的图像
             fe.drawImg = copy
+
 
             detectedFaces.append(fe)
 

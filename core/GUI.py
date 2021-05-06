@@ -7,10 +7,13 @@ from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
 from service.ReportService import ReportService
 from PyQt5.QtGui import QMovie
 from PyQt5.QtCore import QDir, pyqtSignal, QThread, QSize, QDateTime
+from designer.ReportPageImpl import ReportPageImpl
 # from GUIDesign import *
 from designer.GUIDesigner import *
 from core.faceHealthDetect import *
 from FaceLandMark import faceDetection
+from utils import ImageUtils
+from utils.ImageUtils import nparrayToQPixMap
 
 
 # from faceTest import
@@ -55,15 +58,18 @@ class BackendThread:
     # 需要执行大量计算的函数
     @staticmethod
     def faceDetectInBackground(paramMap):
-        color, gloss, image = faceDetect(paramMap['image'])
-        return {'color': color, 'gloss': gloss, 'image': image}
+        detectedFaces = faceDetect(paramMap['image'], 1, paramMap['name'], paramMap['gender'])
+        reports = ReportService.generateReports(detectedFaces)
+        return {'reports': reports}
 
     # 生成报告，有IO操作
     @staticmethod
     def generateReport(paramMap):
-        report = paramMap['reportUtils']
-        report.wordCreate()
-        report.word2pdf()
+        report = paramMap['reports']
+        faces = report.faces
+        for face in faces:
+            ReportService.wordCreate(face)
+            report.wordCreate()
         return {'report', report}
 
 
@@ -99,12 +105,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.Flag_Image = MyWindow.__IMAGE_LABEL_STATE_NONE  # 0表示无图像，1表示开启摄像头读取图像，2表示打开图像文件
 
         # 信息区
-        self.userName = ""
-        self.gender = '男'
-        self.reportText = ""
-        self.faceColor = ""
-        self.faceGloss = ""
+        self.detectedFaces = None
         self.reportUtils = None
+        self.gender = '男'
 
         # 图像区
         self.videoMode = MyWindow.__VIDEO_MODE_NORMAL  # 定义图像输出模式
@@ -117,6 +120,9 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         # UI初始化
         self.setupUi(self)
         self.slot_init()
+
+        # 其它页面
+        self.reportPage = None
 
         # 数据初始化
         self.lineEdit_UserName.setText("张三")
@@ -201,18 +207,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         cv2.putText(currentFrame, s, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
 
         # 将图像转换为pixmap
-        showImage = self.nparrayToQPixMap(currentFrame)
+        showImage = ImageUtils.nparrayToQPixMap(currentFrame)
         self.label_ShowCamera.setPixmap(showImage)
-
-    def nparrayToQPixMap(self, ShowVideo):
-        """
-        OpenCV的BGR的数组转换成QPixMap
-        :param ShowVideo:
-        :return:
-        """
-        ShowVideo = cv2.cvtColor(ShowVideo, cv2.COLOR_BGR2RGB)
-        showImage = QtGui.QImage(ShowVideo.data, ShowVideo.shape[1], ShowVideo.shape[0], QtGui.QImage.Format_RGB888)
-        return QtGui.QPixmap.fromImage(showImage)
 
     def releaseCamera(self):
         if self.cameraTimer is not None:
@@ -246,30 +242,21 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         if type(res) is FaceNotFoundException:
             self.showloadingGIF(False)
             img = self.changeFrameByLableSizeKeepRatio(res.expression)
-            self.label_ShowCamera.setPixmap(self.nparrayToQPixMap(img))
+            self.label_ShowCamera.setPixmap(nparrayToQPixMap(img))
             self.showError("未能识别到面孔！请重置工作区再试试看。" + str(res.message))
             return
 
-        faceColor = res['color']
-        faceGloss = res['gloss']
-        image = res['image']
-
-        img_resize = self.changeFrameByLableSizeKeepRatio(image)
-        self.label_ShowCamera.setPixmap(self.nparrayToQPixMap(img_resize))
-
-        # 根据人脸检测情况和人员信息，生成诊断结果
-        skinResults, glossResults = ReportService.CreateDetectResults(faceColor, faceGloss)
-
-        reportText = "姓名: %s \n" % self.userName + "性别: %s \n" % self.gender + \
-                     "您的面部诊断结果: \n" + "    肤色诊断结果: %s \n" % faceColor + "    皮肤光泽诊断结果: %s \n" % faceGloss + \
-                     "诊断结果分析: \n %s \n" % skinResults + "    %s" % glossResults
-        self.showInfo(reportText)
-
-        self.reportUtils = ReportService(self.userName, self.gender, self.faceColor, skinResults, glossResults,
-                                         img_resize)
-
+        reports = res['reports']
         self.button_CaptureAnalyse.setEnabled(True)
         self.showloadingGIF(False)
+
+        self.reports = reports
+        if self.reportPage is None:
+            self.reportPage = ReportPageImpl()
+        self.reportPage.loadReports(self.reports)
+
+        self.reportPage.show()
+
 
     def messageBoxWarning(self, msg):
         QtWidgets.QMessageBox.warning(self, 'warning', msg, buttons=QtWidgets.QMessageBox.Ok)
@@ -277,13 +264,13 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
     def analyze(self):  # 要思考未打开摄像头时按下“拍照”的问题
         """
-        面容分析
+        面容分析gg
         :return:
         """
         self.button_CaptureAnalyse.setEnabled(False)
-        self.userName = self.lineEdit_UserName.text()
+        userName = self.lineEdit_UserName.text()
 
-        if len(self.userName.strip()) == 0:
+        if len(userName.strip()) == 0:
             self.messageBoxWarning("请输入姓名")
             return
 
@@ -299,7 +286,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
                 self.showInfo("正在为您诊断，请耐心等待...")
                 self.showloadingGIF(True)
                 BackendThread.InnerThread(BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
-                                          {'image': self.image}
+                                          {'image': self.image, 'name': userName, 'gender': self.gender}
                                           ).start()
             except FaceNotFoundException as err:
                 self.button_CaptureAnalyse.setEnabled(True)
@@ -310,7 +297,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             # faseDetect过程比较长，需要多线程执行, 加载过渡动画动画
             self.showInfo("正在为您诊断，请耐心等待...")
             BackendThread.InnerThread(BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
-                                      {'image': self.image}
+                                      {'image': self.image, 'name': userName, 'gender': self.gender}
                                       ).start()
             self.showloadingGIF(True)
             #  开启后台线程检测
@@ -363,15 +350,14 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.EdgeTractThrehold1 = self.horizontalSlider_EdgeTract.value()
 
     def SaveReport(self):
-        # pdfCreate(filename, name, sex, faceColor, faceGloss, SkinResults, GlossResults)
-        if self.reportUtils is None:
+        if self.reports is None:
             self.showError("尚未生成报告,请先进行诊断")
             return
 
         self.showInfo("正在保存报告，请稍等...")
         self.button_SaveReport.setEnabled(False)
         BackendThread.InnerThread(BackendThread.generateReport, self.handleSaveReport,
-                                  {'reportUtils': self.reportUtils}
+                                  {'reports': self.reports}
                                   ).start()
 
     def handleSaveReport(self, paramMap):
@@ -382,7 +368,6 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyWindow()
-    myWin.setWindowTitle("人脸像素检测分析-在中医面诊的应用")
+    myWin.setWindowTitle("人脸像素统计与分析软件")
     myWin.show()
     sys.exit(app.exec_())
-

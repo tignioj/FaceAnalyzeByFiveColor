@@ -154,7 +154,7 @@ class Skin_Detect():
             ax2.set_xlabel('pixel intensity')
             ax2.xaxis.set_label_coords(0.5, -0.025)
             ax2.set_ylabel('number of pixels')
-            ax2.hist(Y_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
+            ax2.hist_rgb(Y_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
             # Cb components
             ax3 = fig2.add_subplot(3, 1, 2)
             ax3.set_title('Distribution of Cb')
@@ -162,7 +162,7 @@ class Skin_Detect():
             ax3.set_xlabel('pixel intensity')
             ax3.xaxis.set_label_coords(0.5, -0.025)
             ax3.set_ylabel('number of pixels')
-            ax3.hist(Cb_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
+            ax3.hist_rgb(Cb_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
             # Cr components
             ax4 = fig2.add_subplot(3, 1, 3)
             ax4.set_title('Distribution of Cr')
@@ -170,7 +170,7 @@ class Skin_Detect():
             ax4.set_xlabel('pixel intensity')
             ax4.xaxis.set_label_coords(0.5, -0.025)
             ax4.set_ylabel('number of pixels')
-            ax4.hist(Cr_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
+            ax4.hist_rgb(Cr_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
             # show the effect of the bounding rules of Cr-Cb
             # black and white image after the mask
             img_bw = YCrCb_Rule.astype(np.uint8)

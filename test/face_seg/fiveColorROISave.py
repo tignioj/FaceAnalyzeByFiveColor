@@ -26,7 +26,11 @@ def segROIAndSave(name, img):
     if not os.path.isdir(roiPATH):
         os.makedirs(roiPATH)
 
-    cv2.imwrite(roiPATH + "\\" + name + ".jpg", faceEntity.drawImg)
+    cv2.imwrite(roiPATH + "\\" + name + "_draw.jpg", faceEntity.drawImg)
+
+    cv2.imwrite(roiPATH + "\\" + name + "_face.jpg", faceEntity.facePart)
+
+    cv2.imwrite(roiPATH + "\\" + name + "_face_trim.jpg", faceEntity.facePartOnlySkin)
 
     rois = faceEntity.landMarkROI
 

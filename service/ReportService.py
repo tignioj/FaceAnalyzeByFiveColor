@@ -1,5 +1,11 @@
+import os
+
 import pdfkit
 from docx import Document
+from utils.SkinUtils import *
+from utils.SkinUtils import SkinUtils
+from entity.ReportEntity import ReportEntity
+from utils.MyDateUtils import *
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import Inches, Pt, RGBColor
 from docx.oxml.ns import qn
@@ -10,25 +16,13 @@ import cv2
 
 
 class ReportService:
-    def __init__(self, username, gender, faceColor, skinResult, glossResult, image):
-        self.username = username
-        self.gender = gender
-        self.faceColor = faceColor
-        self.skinResult = skinResult
-        self.glossResult = glossResult
-        self.image = image
+    @staticmethod
+    def wordCreate(face):
+        generatePath = OUTPUT_PATH + "\\" + face.name + "\\" + getTodayYearMonthDayHourMinSec()
+        if not os.path.isdir(generatePath):
+            os.makedirs(generatePath)
 
-        self.imgPath = OUTPUT_PATH + '\\DiagnoseResult.jpg'
-
-    def getImageStream(self):
-        success, encoded_image = cv2.imencode('.jpg', self.image)
-        return encoded_image.tobytes()
-
-
-
-    def wordCreate(self):
-        cv2.imwrite(self.imgPath, self.image)
-
+        cv2.imwrite(generatePath + "\\" + face.name + "_face.jpg", face.facePart)
         doc = Document()
         # 标题
         doc.add_heading()
@@ -49,20 +43,16 @@ class ReportService:
             paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
         # 内容
-        setFontWord("姓名： %s" % self.username)
-        setFontWord("性别： %s" % self.gender)
-        setFontWord("面容健康诊断：")
-        setFontWord("    肤色状态：%s" % self.faceColor)
-        setFontWord("    光泽状态：%s" % self.glossResult)
-        doc.add_picture(self.imgPath, width=Inches(2))
-        setFontWord("面容健康小贴士：")
-        setFontWord("    (1)%s" % self.skinResult)
-        setFontWord("    (2)%s" % self.glossResult)
-        doc.save(OUTPUT_PATH + '\\FaceDiagnoseResults.docx')
+        setFontWord("姓名： %s" % face.name)
+        setFontWord("性别： %s" % face.gender)
+        doc.add_picture(face.imgPath, width=Inches(2))
+        doc.save(generatePath + "\\" + face.name + "_report.docx")
+        ReportService._word2pdf(generatePath, generatePath + "\\" + face.name + "_report.docx", )
 
-    def word2pdf(self):
-        wordfile = OUTPUT_PATH + "\\FaceDiagnoseResults.docx"
-        pdffile = OUTPUT_PATH + "\\FaceDiagnoseResults.pdf"
+    @staticmethod
+    def _word2pdf(wordFolder, wordPath):
+        wordfile = wordPath
+        pdffile = wordFolder + "\\report.pdf"
         word = gencache.EnsureDispatch('Word.Application')
         doc = word.Documents.Open(wordfile, ReadOnly=1)
         doc.ExportAsFixedFormat(pdffile,
@@ -72,38 +62,33 @@ class ReportService:
         word.Quit(constants.wdDoNotSaveChanges)
 
     @staticmethod
-    def CreateDetectResults(face_color, face_gloss):
-        if face_color == '正常': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-        if face_color == '白': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-        if face_color == '黄': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-        if face_color == '赤': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-        if face_color == '青': resultOfSkin = "“漂亮的皮囊”get，请继续保持！"
-        if face_color == '黑': resultOfSkin = "最近皮肤有点差哦，请注意多休息，可以使用一些护肤品！"
+    def generateReports(detectedFaces):
+        reports = []
+        for face in detectedFaces:
+            report = ReportEntity()
+            report.gender = face.gender
+            report.username = face.name
+            report.imgPath = face.imgPath
+            report.facePart = face.facePart
+            report.rois = face.landMarkROI
+            report.roisRGB = []
+            report.roisHSV = []
+            report.roisYCrCb = []
+            report.roisLab = []
+            fig = plt.figure()
+            for roi in report.rois:
+                fig.clear()
+                report.roisRGB.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_RGB))
+                fig.clear()
+                report.roisHSV.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_HSV))
+                fig.clear()
+                report.roisLab.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_Lab))
+                fig.clear()
+                report.roisYCrCb.append(SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_YCrCb))
+            report.drawImg = face.drawImg
+            # report.faceColor = SkinUtils.roiTotalColorDetect(report.rois)
+            # report.skinResult = SkinUtils.getResultByColor(report.rois)
 
-        if face_gloss == '有光泽': resultOfGloss = '如果不是皮肤太油，那就是皮肤太好，羡慕~'
-        if face_gloss == '无光泽': resultOfGloss = '面色红润有光泽，你不想要吗，用一些保湿的护肤品吧！'
-        if face_gloss == '少光泽': resultOfGloss = '皮肤有点光泽，用一点护肤品就更好了。'
+            reports.append(report)
 
-        return resultOfSkin, resultOfGloss
-
-    def txt2pdf(self, txt_file, pdf_file):
-        # 将字符串生成pdf文件
-        config = pdfkit.configuration(wkhtmltopdf=r"D:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-        options = {'encoding': 'utf-8'}
-        pdfkit.from_file(txt_file, pdf_file, configuration=config, options=options)
-
-    def pdfCreate(self, filename, name, sex, face_color, face_gloss, resultOfSkin, resultOfGloss):
-        with open(filename, 'w') as f:
-            # f.write("姓名: %s <br>" %'孙悦')
-            # f.write("性别: %s <br>" %'男')
-            # f.write("面部诊断结果: %s <br>" %'正常')
-            f.write("姓名: %s <br>" % name)
-            f.write("性别: %s <br>" % sex)
-            f.write("您的面部诊断结果: <br>")
-            f.write("&emsp;&emsp; 肤色诊断结果: %s <br>" % face_color)
-            f.write("&emsp;&emsp; 皮肤光泽诊断结果: %s <br>" % face_gloss)
-            f.write("诊断结果分析: <br>&emsp;&emsp; %s <br>" % resultOfSkin)
-            f.write("&emsp;&emsp; %s <br>" % resultOfGloss)
-
-        with open(filename, 'r') as f:
-            self.txt2pdf(f, 'DetectResults.pdf')
+        return reports

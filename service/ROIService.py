@@ -116,6 +116,6 @@ class ROIService:
         (x, y, w, h) = cv2.boundingRect(roiEntity.roiRectanglePoints)
         roi = image[y:y + h, x:x + w]
         roiEntity.img = roi
-        roiEntity.imgOnlySkin = SkinUtils.trimSkin(roi)
+        roiEntity.imgOnlySkin = SkinUtils.SkinUtils.trimSkin(roi)
 
         return roiEntity

@@ -107,6 +107,13 @@ def rgb(image):
 
 def Lab(image):
     """
+    范围:
+    This outputs 0≤L≤100, −127≤a≤127, −127≤b≤127 . The values are then converted to the destination data type:
+    8-bit images: L←L∗255/100,a←a+128,b←b+128
+
+    L:0-180
+    a:0-255
+    b:0-255
     :param image:
     :return:
     """

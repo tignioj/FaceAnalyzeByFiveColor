@@ -152,8 +152,8 @@ plt.ylabel('probability')
 plt.yticks([0.2, 0.4, 0.6, 0.8])
 
 barwidth = 0.24
-x1 = list(range(len(x)))
-y1 = b.transpose()[:1][0]
+x1 = list(range(len(x)))  # [0,1,2,3]
+y1 = b.transpose()[:1][0]  # 取矩阵第一列[0.xxx, 0.xx, 0.xx, 0.xx]
 x2 = [i + barwidth for i in x1]
 y2 = b.transpose()[1:2][0]
 x3 = [i + barwidth * 2 for i in x1]
@@ -163,16 +163,23 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 # 设置x轴刻度
 plt.xticks(x2, x)
 
-i = 0
 for xx1, xx2, xx3, yy1, yy2, yy3, in zip(x1, x2, x3, y1, y2, y3):
     # ha: horizontal alignment
-    plt.text(xx1, np.round(y1[i] + 0.04, 4), '%.2f' % yy1, ha='center', va='top')
-    plt.text(xx2, np.round(y2[i] + 0.04, 4), '%.2f' % yy2, ha='center', va='top')
-    plt.text(xx3, np.round(y3[i] + 0.04, 4), '%.2f' % yy3, ha='center', va='top')
-    i += 1
+    plt.text(xx1, yy1 + 0.04, '%.2f' % yy1, ha='center', va='top')
+    plt.text(xx2, yy2 + 0.04, '%.2f' % yy2, ha='center', va='top')
+    plt.text(xx3, yy3 + 0.04, '%.2f' % yy3, ha='center', va='top')
 
 plt.bar(x1, y1, label='Euclidean Distance', width=barwidth)
 plt.bar(x2, y2, label='Lab distance', width=barwidth)
 plt.bar(x3, y3, label='HSV', width=barwidth)
 plt.legend()
 plt.show()
+
+
+# 散点图：
+"""
+横坐标:Cr [0,255]
+纵坐标:Cb [0,255]
+中心点：
+对应关系：先画出横坐标，再画出纵坐标
+"""
