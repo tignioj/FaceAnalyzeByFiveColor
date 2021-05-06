@@ -14,12 +14,6 @@ def cs(titile="0x123", img=None):
     cv2.destroyWindow(titile)
 
 
-chi_sample = cv2.imread("../../result/chi/ting_trim.jpg")
-black_sample = cv2.imread("../../result/black/ting_trim.jpg")
-white_sample = cv2.imread("../../result/white/ting_trim.jpg")
-yellow_sample = cv2.imread("../../result/yellow/ting_trim.jpg")
-
-
 # img_predict_roi_ting = cv2.resize(img_predict_roi_ting, img_sample_roi_ting.shape[::-1][1:3])
 
 def getDistance1(predict, sample):
@@ -178,83 +172,61 @@ def getDistanceByRGB(predict, sample):
     return distance
 
 
-def distance(name="0x123", sample=None):
-    # predict = cv2.imread("../../result/predict1/ting_trim.jpg")
-    # predict = cv2.imread("../../result/predict2/ting_trim.jpg")
-    # predict = cv2.imread("../../result/predict3_white/ting_trim.jpg")
-    predict = cv2.imread("../../result/white/ming_tang_trim.jpg")
-    # predict = cv2.imread("../../result/black/ming_tang_trim.jpg")
-    # predict = cv2.imread("../../result/black/ting_trim.jpg")
-    # predict = cv2.imread("../../result/predict4_dark/ting_trim.jpg")
-    predict = cv2.resize(predict, (sample.shape[1], sample.shape[0]))
-    res = np.hstack([predict, sample])
-    cv2.imshow(name, res)
-    return getDistance1(predict, sample), getDistance2ByLab(predict, sample), getDistance2BHSV(predict,
-                                                                                               sample), getDistanceByRGB(
-        predict, sample), getDistanceYCrCb(predict, sample)
+def getImg(path):
+    img = cv2.imread(path)
+    return imutils.resize(img, 200, 200)
 
 
-dt_chi = distance('chi', chi_sample)
-dt_black = distance('black', black_sample)
-dt_white = distance('white', white_sample)
-dt_yellow = distance('yellow', yellow_sample)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-font = ImageFont.truetype("../../fonts/simsun.ttc", 10)
+chi_sample = getImg("../../result/chi/ting_trim.jpg")
+black_sample = getImg("../../result/black/ting_trim.jpg")
+white_sample = getImg("../../result/white/ting_trim.jpg")
+yellow_sample = getImg("../../result/yellow/ting_trim.jpg")
 
-a = np.vstack([dt_chi, dt_black, dt_white, dt_yellow])
-# b = 1 - (a / a.sum(axis=0, keepdims=1))
-b = a / a.sum(axis=0, keepdims=1)
-# x = ['chi', 'black', 'white', 'yellow']
-x = ['赤', '黑', '白', '黄']
-# x = np.asarray([1,2,3,4])
 
-# plt.figure(figsize=(100, 50), dpi=8)
-plt.ylim(0, 1)
-plt.title("预测值")
-plt.xlabel('four color')
-plt.ylabel('probability')
-# $正则$
-# plt.yticks([0.2, 0.4, 0.6, 0.8], ['r$very\ bad$', r'$bad$', 'normal', 'good'])
-plt.yticks([0.2, 0.4, 0.6, 0.8])
 
-barwidth = 0.15
-x1 = list(range(len(x)))  # [0,1,2,3]
-y1 = b.transpose()[:1][0]  # 取矩阵第一列[0.xxx, 0.xx, 0.xx, 0.xx]
-x2 = [i + barwidth for i in x1]
-y2 = b.transpose()[1:2][0]
-x3 = [i + barwidth * 2 for i in x1]
-y3 = b.transpose()[2:3][0]
-x4 = [i + barwidth * 3 for i in x1]
-y4 = b.transpose()[3:4][0]
 
-x5 = [i + barwidth * 4 for i in x1]
-y5 = b.transpose()[4:5][0]
+def distance(predict, name=""):
+    dist_red = getDistance1(predict, chi_sample)
+    dist_yellow = getDistance1(predict, yellow_sample)
+    dist_black = getDistance1(predict, black_sample)
+    dist_white = getDistance1(predict, white_sample)
+    d = [dist_red, dist_yellow, dist_black, dist_white]
+    ind = d.index(min(d))
+    if ind == 0: color = "红色"
+    if ind == 1: color = "黄色"
+    if ind == 2: color = "黑色"
+    if ind == 3: color = "白色"
 
-plt.rcParams['font.sans-serif'] = ['SimHei']
-# 设置x轴刻度
-plt.xticks(x2, x)
+    font = ImageFont.truetype("../../fonts/simsun.ttc", 10)
+    x = ['赤', '黄', '黑', '白']
+    plt.title("计算得到:" + color)
+    plt.xlabel('four color')
+    plt.ylabel('probability')
 
-for xx1, xx2, xx3, xx4, xx5, yy1, yy2, yy3, yy4, yy5, in zip(x1, x2, x3, x4, x5, y1, y2, y3, y4, y5):
-    # ha: horizontal alignment
-    plt.text(xx1, yy1 + 0.04, '%.2f' % yy1, ha='center', va='top')
-    plt.text(xx2, yy2 + 0.04, '%.2f' % yy2, ha='center', va='top')
-    plt.text(xx3, yy3 + 0.04, '%.2f' % yy3, ha='center', va='top')
-    plt.text(xx4, yy4 + 0.04, '%.2f' % yy4, ha='center', va='top')
-    plt.text(xx5, yy5 + 0.04, '%.2f' % yy5, ha='center', va='top')
+    # 计算概率
+    n = np.asarray([dist_red, dist_yellow, dist_black, dist_white])
+    n = sum(n) - n
+    norm = np.linalg.norm(n)
+    normal_array = n / norm
 
-plt.bar(x1, y1, label='Euclidean Distance', width=barwidth)
-plt.bar(x2, y2, label='Lab distance', width=barwidth)
-plt.bar(x3, y3, label='HSV', width=barwidth)
-plt.bar(x4, y4, label='RGB', width=barwidth)
-plt.bar(x5, y5, label='YCrCb', width=barwidth)
-plt.legend()
+    barwidth = 0.15
+    x1 = list(range(len(x)))  # [0,1,2,3]
+    y1 = normal_array
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    # 设置x轴刻度
+    plt.xticks(x1, x)
+    plt.ylim(0, 1)
+    plt.yticks([0.2, 0.4, 0.6, 0.8, 1])
+
+    for x, y in zip(x1, y1):
+        # ha: horizontal alignment
+        plt.text(x, y + 0.025, '%.2f' % y, ha='center', va='top')
+
+    plt.bar(x1, y1, label='融合计算')
+    plt.legend()
+
+
+# predict_red = getImg("../../result/chi/ting_trim.jpg")
+predict_white = getImg("../../result/predict3_white/ting_trim.jpg")
+distance(predict_white, "白色")
 plt.show()
-
-# 散点图：
-"""
-横坐标:Cr [0,255]
-纵坐标:Cb [0,255]
-中心点：
-对应关系：先画出横坐标，再画出纵坐标
-"""

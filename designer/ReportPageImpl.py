@@ -19,7 +19,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
         self.initDict()
 
     def initDict(self):
-        self.label_ting_user_dict = {
+        self.label_user_dict = {
             KEY_ting: self.label_ting_user,
             KEY_que: self.label_que_user,
             KEY_ming_tang: self.label_ming_tang_user,
@@ -30,7 +30,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
             KEY_jia_right: self.label_jia_user,
             KEY_ke: self.label_ke_user
         }
-        self.label_ting_rgb_dict = {
+        self.label_rgb_dict = {
             KEY_ting: self.label_ting_rgb,
             KEY_que: self.label_que_rgb,
             KEY_ming_tang: self.label_ming_tang_rgb,
@@ -41,7 +41,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
             KEY_jia_right: self.label_jia_rgb,
             KEY_ke: self.label_ke_rgb
         }
-        self.label_ting_hsv_dict = {
+        self.label_hsv_dict = {
             KEY_ting: self.label_ting_hsv,
             KEY_que: self.label_que_hsv,
             KEY_ming_tang: self.label_ming_tang_hsv,
@@ -52,7 +52,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
             KEY_jia_right: self.label_jia_hsv,
             KEY_ke: self.label_ke_hsv
         }
-        self.label_ting_ycrcb_dict = {
+        self.label_ycrcb_dict = {
             KEY_ting: self.label_ting_ycrcb,
             KEY_que: self.label_que_ycrcb,
             KEY_ming_tang: self.label_ming_tang_ycrcb,
@@ -63,7 +63,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
             KEY_jia_right: self.label_jia_ycrcb,
             KEY_ke: self.label_ke_ycrcb
         }
-        self.label_ting_lab_dict = {
+        self.label_lab_dict = {
             KEY_ting: self.label_ting_lab,
             KEY_que: self.label_que_lab,
             KEY_ming_tang: self.label_ming_tang_lab,
@@ -74,7 +74,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
             KEY_jia_right: self.label_jia_lab,
             KEY_ke: self.label_ke_lab
         }
-        self.label_ting_result_dict = {
+        self.label_result_dict = {
             KEY_ting: self.label_ting_result,
             KEY_que: self.label_que_result,
             KEY_ming_tang: self.label_ming_tang_result,
@@ -97,7 +97,12 @@ class ReportPageImpl(QMainWindow, ReportPage):
             self.label_username.setText(str(r.username))
             self.label_sex.setText(str(r.gender))
 
-            self.loadROIImage(self.label_ting_user_dict, r.roiDict)
+            self.loadROIImage(self.label_user_dict, r.roiDict)
+            self.loadRoiHist(self.label_rgb_dict, r.roiRGBDict)
+            self.loadRoiHist(self.label_ycrcb_dict, r.roiYCrCbDict)
+            self.loadRoiHist(self.label_hsv_dict, r.roiHSVDict)
+            self.loadRoiHist(self.label_lab_dict, r.roiLabDict)
+
             """
             拿到分割的ROI，将其加载到GUI中，
             步骤：1. 获取分割的ROIDict
@@ -118,8 +123,24 @@ class ReportPageImpl(QMainWindow, ReportPage):
         self.reportPageSignal.emit()
 
     def loadROIImage(self, labelDict, roiDict):
+        """
+        封装了ROI对象
+        :param labelDict:
+        :param roiDict:
+        :return:
+        """
         for (name, roi) in roiDict.items():
             self.setCvImgToLabel(labelDict[name], roi.img)
+
+    def loadRoiHist(self, labelDict, roiDict):
+        """
+        封装ROI的时候只是封装了图像，而不是ROIEntity对象
+        :param labelDict:
+        :param roiDict:
+        :return:
+        """
+        for (name, roi) in roiDict.items():
+            self.setCvImgToLabel(labelDict[name], roi, 200, 200)
 
     @staticmethod
     def cvshow(img, title="0x123"):
@@ -127,5 +148,5 @@ class ReportPageImpl(QMainWindow, ReportPage):
         cv2.waitKey(0)
         cv2.destroyWindow(title)
 
-    def setCvImgToLabel(self, label, cvImg):
-        label.setPixmap(nparrayToQPixMap(cvImg))
+    def setCvImgToLabel(self, label, cvImg, width=None, height=None):
+        label.setPixmap(nparrayToQPixMap(cvImg, width, height))

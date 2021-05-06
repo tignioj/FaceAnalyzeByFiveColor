@@ -27,8 +27,7 @@ class SkinUtils:
 
     @staticmethod
     def show_histogram(hist, title, color, label=['a', 'b', 'c']):
-        global x1, y1, color_glob
-        plt.title(title)
+        # plt.title(title)
         # 定位图片
         # plt.subplot(3, 2, pos)
         for h, c, l in zip(hist, color, label):  # color: ('b', 'g', 'r'), zip:连接
@@ -105,7 +104,7 @@ class SkinUtils:
         return np.mean(dist_byloop)
 
     @staticmethod
-    def getDistance2ByLab(predict, sample):
+    def getDistanceByLab(predict, sample):
         """
         :param predict:
         :param sample:
@@ -139,7 +138,7 @@ class SkinUtils:
         return distance
 
     @staticmethod
-    def getDistance2BHSV(predict, sample):
+    def getDistanceHSV(predict, sample):
         """
         :param predict:
         :param sample:
@@ -171,6 +170,38 @@ class SkinUtils:
         return distance
 
     @staticmethod
+    def getDistanceYCrCb(predict, sample):
+        """
+        :param predict:
+        :param sample:
+        :return:
+        """
+
+        def trimBlack(img_hsv):
+            k = 0
+            Y, Cr, Cb = 0, 0, 0
+            for row in img_hsv:
+                for v in row:
+                    # 排除黑色
+                    if v[0] != 0:
+                        k = k + 1
+                    Y += v[0]
+                    Cr += v[1]
+                    Cb += v[2]
+            # 计算出了LAB的均值
+            H0 = int(round(Y / k))
+            S0 = int(round(Cr / k))
+            V0 = int(round(Cb / k))
+            return H0, S0, V0
+
+        predict_YCrCb = cv2.cvtColor(predict, cv2.COLOR_BGR2YCrCb)
+        sample_YCrCb = cv2.cvtColor(sample, cv2.COLOR_BGR2HSV)
+        pY, pCr, pCb = trimBlack(predict_YCrCb)
+        sY, sCr, sCb = trimBlack(sample_YCrCb)
+        distance = ((pY - sY) ** 2 + (pCr - sCr) ** 2 + (pCb - sCb) ** 2)
+        return distance
+
+    @staticmethod
     def distance(predict, sample=None):
         # predict = cv2.imread("../../result/predict1/ting_trim.jpg")
         # predict = cv2.imread("../../result/predict2/ting_trim.jpg")
@@ -182,8 +213,8 @@ class SkinUtils:
         predict = cv2.resize(predict, (sample.shape[1], sample.shape[0]))
         # res = np.hstack([predict, sample])
         # cv2.imshow(name, res)
-        return SkinUtils.getDistanceByRGB(predict, sample), SkinUtils.getDistance2ByLab(predict,
-                                                                                        sample), SkinUtils.getDistance2BHSV(
+        return SkinUtils.getDistanceByRGB(predict, sample), SkinUtils.getDistanceByLab(predict,
+                                                                                       sample), SkinUtils.getDistanceHSV(
             predict, sample)
 
     @staticmethod
@@ -191,7 +222,7 @@ class SkinUtils:
         pass
 
 
-def _thread_function():
+def _color_space_show():
     fig1 = plt.figure()
     while videoCapture.isOpened():
         flag, img = videoCapture.read()
@@ -220,7 +251,10 @@ def _thread_function():
     videoCapture.release()
     cv2.destroyAllWindows()
 
+def _distance_test():
+    pass
+
 
 videoCapture = cv2.VideoCapture(1)
 if __name__ == '__main__':
-    _thread_function()
+    _color_space_show()

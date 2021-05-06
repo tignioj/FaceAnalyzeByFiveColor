@@ -15,12 +15,15 @@ def getcvImgFromFigure(fig):
     return img
 
 
-def nparrayToQPixMap(nparrayImg):
+def nparrayToQPixMap(nparrayImg, width=None, height=None):
     """
     OpenCV的BGR的数组转换成QPixMap
     :param nparrayImg:
     :return:
     """
+    if width is None: width = nparrayImg.shape[1]
+    if height is None: height = nparrayImg.shape[0]
+
     nparrayImg = cv2.cvtColor(nparrayImg, cv2.COLOR_BGR2RGB)
     # showImage = QtGui.QImage(nparrayImg.data, nparrayImg.shape[1], nparrayImg.shape[0], QtGui.QImage.Format_RGB888)
     # return QtGui.QPixmap.fromImage(showImage)
@@ -28,7 +31,7 @@ def nparrayToQPixMap(nparrayImg):
     im = nparrayImg
     im = QImage(im.data, im.shape[1], im.shape[0], im.shape[1] * 3, QImage.Format_RGB888)
     # pix = QPixmap(im).scaled(a.width(), a.height())
-    return QPixmap(im)
+    return QPixmap(im).scaled(width, height)
 
 
 def cvshow(img, title="0x123"):

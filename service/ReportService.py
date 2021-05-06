@@ -77,7 +77,8 @@ class ReportService:
             report.roiHSVDict = {}
             report.roiYCrCbDict = {}
             report.roiLabDict = {}
-            fig = plt.figure()
+            fig = plt.figure(figsize=(4, 4))
+            # fig = plt.figure()
             LogUtils.log("reportService", "getting roi colorspace...")
             for (name, roi) in report.roiDict.items():
                 fig.clear()

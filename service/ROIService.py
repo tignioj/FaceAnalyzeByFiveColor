@@ -222,6 +222,7 @@ class ROIService:
         #     print("y:" + str(y) + "->" + str(y + h) + ", x:" + str(x) + "->" + str(x + w))
         # LogUtils.log("RoiService", roi.shape, image.shape)
         roiEntity.img = roi
+
         roiEntity.imgOnlySkin = SkinUtils.SkinUtils.trimSkin(roi)
 
         return roiEntity

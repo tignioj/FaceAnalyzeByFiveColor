@@ -1,5 +1,7 @@
 import re
 import time
+
+from core.BackGroundThread import BackendThread
 from utils.ImageUtils import *
 from utils.LogUtils import LogUtils
 
@@ -16,68 +18,6 @@ from core.faceHealthDetect import *
 from FaceLandMark import faceDetection
 from utils import ImageUtils
 from utils.ImageUtils import nparrayToQPixMap
-
-
-# from faceTest import
-
-class BackendThread:
-    class InnerThread(QThread):
-        """
-        匿名内部类线程
-        """
-        """定义一个信号"""
-        signal = pyqtSignal(dict)
-
-        def __init__(self,
-                     invokeFun,  # 让线程执行的函数，通常是大量计算的函数
-                     callbackFun,  # 回调函数
-                     invokeParam={},  # 线程执行函数需要传的参数，需要传入字典
-                     callbackParam={}  # 回调函数的参数，需要传入字典
-                     ):
-            # 一定要调用父类，不然这个线程可能执行不了
-            super(BackendThread.InnerThread, self).__init__()
-            self.callBackFun = callbackFun
-            self.invokeParam = invokeParam
-            self.callBackParam = callbackParam
-            self.invokeFun = invokeFun
-
-        def run(self):
-            """ 线程调用start()之后就会调用这个方法 """
-
-            # 绑定槽函数，也就是回调函数
-            self.signal.connect(self.callBackFun)
-            try:
-                # 调用需要大量计算的函数
-                res = self.invokeFun(self.invokeParam)
-                # 执行回调函数
-                # self.signal.emit({'res': res, 'param': self.callBackParam})
-                self.signal.emit({'res': res, 'param': self.callBackParam})
-            except Exception as err:
-                # 有可能出现异常
-                # self.signal.emit({'res': err, 'param': self.callBackParam})
-                self.signal.emit({'res': err, 'param': self.callBackParam})
-
-    # 需要执行大量计算的函数
-    @staticmethod
-    def faceDetectInBackground(paramMap):
-        detectedFaces = faceDetect(paramMap['image'], 1, paramMap['name'], paramMap['gender'])
-        reports = ReportService.generateReports(detectedFaces)
-        LogUtils.log("GUI", 'report generate finished!', len(reports))
-        return {'reports': reports}
-
-    # 生成报告，有IO操作
-    @staticmethod
-    def generateReport(paramMap):
-        report = paramMap['reports']
-        faces = report.faces
-        for face in faces:
-            ReportService.wordCreate(face)
-            report.wordCreate()
-        return {'report', report}
-
-    @staticmethod
-    def fakeFunctionForUpdateUI(paramMap):
-        pass
 
 
 class MyWindow(QMainWindow, Ui_MainWindow):
@@ -187,7 +127,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
     def showCamera(self):
         flag, self.image = self.videoCapture.read()
         if not flag:
-            self.cameraTimer.stop()
+            if self.cameraTimer.isActive():
+                self.cameraTimer.stop()
             self.showError("相机未能成功读取到数据")
             self.releaseCamera()
             self.Flag_Image = self.__IMAGE_LABEL_STATE_NONE
@@ -220,6 +161,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
             if self.cameraTimer.isActive():
                 self.cameraTimer.stop()
                 LogUtils.log("GUI", "你没有打开相机")
+                return
 
         if self.videoCapture is not None:
             if self.videoCapture.isOpened():
@@ -315,25 +257,37 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         LogUtils.log("GUI", "当前模式为:", self.Flag_Image)
         if self.Flag_Image == self.__IMAGE_LABEL_STATE_USING_CAMERA:
             flag, self.image = self.videoCapture.read()
+            LogUtils.log("GUI", "获得一帧图片", self.image.shape)
             self.closeCamera()
             try:
+                LogUtils.log("GUI", "正在诊断...")
                 self.showInfo("正在为您诊断，请耐心等待...")
                 self.showloadingGIF(True)
-                BackendThread.InnerThread(BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
+                BackendThread.InnerThread(self, BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
                                           {'image': self.image, 'name': userName, 'gender': gender}
                                           ).start()
+                LogUtils.log("GUI", "后台已经发起请求", userName + "," + gender)
             except FaceNotFoundException as err:
+                LogUtils.error("GUI", "没有找到人脸！", err)
                 self.button_CaptureAnalyse.setEnabled(True)
                 self.showError(err.message)
+            except Exception as e:
+                LogUtils.error("GUI", "未知错误:", e)
 
         elif self.Flag_Image == self.__IMAGE_LABEL_STATE_USING_FILE:
             self.Flag_Image = self.__IMAGE_LABEL_STATE_NONE
+
+            LogUtils.log("GUI", "使用图片检测中...", self.image.shape)
+
             # faseDetect过程比较长，需要多线程执行, 加载过渡动画动画
             self.showInfo("正在为您诊断，请耐心等待...")
-            BackendThread.InnerThread(BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
+            self.showloadingGIF(True)
+            LogUtils.log("GUI", "发起后台线程...", self.image.shape)
+            BackendThread.InnerThread(self, BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
                                       {'image': self.image, 'name': userName, 'gender': gender}
                                       ).start()
-            self.showloadingGIF(True)
+
+            LogUtils.log("GUI", "后台已经发起请求", userName + "," + gender)
             #  开启后台线程检测
 
     def showError(self, text):
@@ -352,8 +306,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
         self.textEdit_Report.setPlainText("[" + s + "]" + "\n" + text)
 
     def showloadingGIF(self, isShow):
-        self.cameraTimer.stop()
-
+        if self.cameraTimer.isActive():
+            self.cameraTimer.stop()
         if isShow:
             self.movie.setScaledSize(QSize(800, 600))
             self.label_ShowCamera.setMovie(self.movie)
@@ -398,7 +352,7 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 
         self.showInfo("正在保存报告，请稍等...")
         self.button_SaveReport.setEnabled(False)
-        BackendThread.InnerThread(BackendThread.generateReport, self.handleSaveReport,
+        BackendThread.InnerThread(self, BackendThread.generateReport, self.handleSaveReport,
                                   {'reports': self.reports}
                                   ).start()
 
