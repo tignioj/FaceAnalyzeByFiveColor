@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 import imutils
 import numpy as np
-from FaceLandMark import faceDetection
+from core.FaceLandMark import faceDetection
 import copy
 # from tongueDiagnose import TongueDiagnose
 from const_var import *

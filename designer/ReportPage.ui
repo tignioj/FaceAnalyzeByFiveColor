@@ -27,7 +27,7 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0,0,0">
+        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="2,3,3,1,1">
          <property name="sizeConstraint">
           <enum>QLayout::SetDefaultConstraint</enum>
          </property>
@@ -52,6 +52,41 @@
              </property>
             </widget>
            </item>
+           <item>
+            <layout class="QFormLayout" name="formLayout_2">
+             <property name="labelAlignment">
+              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <item row="0" column="0">
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>用户名：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_username">
+               <property name="text">
+                <string>UserName</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>性别：</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_sex">
+               <property name="text">
+                <string>Sex</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
           </layout>
          </item>
          <item>
@@ -62,37 +97,9 @@
           </widget>
          </item>
          <item>
-          <layout class="QFormLayout" name="formLayout_2">
-           <property name="labelAlignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>用户名：</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_username">
-             <property name="text">
-              <string>UserName</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string>性别：</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLabel" name="label_sex">
-             <property name="text">
-              <string>Sex</string>
-             </property>
-            </widget>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QTextEdit" name="textEdit_result"/>
            </item>
           </layout>
          </item>
@@ -149,7 +156,7 @@
       <property name="title">
        <string>统计</string>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,7,7,7,7,7,7,7">
+      <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_header">
          <item>
@@ -284,25 +291,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QLabel" name="label_fenxi_header">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">font-weight:bold</string>
-           </property>
-           <property name="text">
-            <string>分析</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>
@@ -425,22 +413,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QLabel" name="label_fenxi_user">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>分析</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>
@@ -550,22 +522,6 @@
           <widget class="QLabel" name="label_ke_rgb">
            <property name="text">
             <string>颏</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_fenxi_rgb">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>分析</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -687,22 +643,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QLabel" name="label_fenxi_hsv">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>分析</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>
@@ -812,22 +752,6 @@
           <widget class="QLabel" name="label_ke_ycrcb">
            <property name="text">
             <string>颏</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_fenxi_ycrcb">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>分析</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -949,16 +873,115 @@
            </property>
           </widget>
          </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_statistics">
          <item>
-          <widget class="QLabel" name="label_fenxi_lab">
+          <widget class="QLabel" name="label_part_statistics">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>74</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>74</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">font-weight:bold</string>
+           </property>
            <property name="text">
-            <string>分析</string>
+            <string>统计</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line_9">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_ting_statistics">
+           <property name="text">
+            <string>庭</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_que_statistics">
+           <property name="text">
+            <string>阙</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_ming_tang_statistics">
+           <property name="text">
+            <string>明堂</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_quan_statistics">
+           <property name="text">
+            <string>颧</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_chun_statistics">
+           <property name="text">
+            <string>唇</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_jia_statistics">
+           <property name="text">
+            <string>颊</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_ke_statistics">
+           <property name="text">
+            <string>颏</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -968,7 +991,7 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_result">
+        <layout class="QHBoxLayout" name="horizontalLayout_report">
          <item>
           <widget class="QLabel" name="label_part_result">
            <property name="enabled">
@@ -1004,7 +1027,7 @@
           </widget>
          </item>
          <item>
-          <widget class="Line" name="line_9">
+          <widget class="Line" name="line_11">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -1074,22 +1097,6 @@
           <widget class="QLabel" name="label_ke_result">
            <property name="text">
             <string>颏</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_fenxi_result">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>分析</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>

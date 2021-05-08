@@ -2,9 +2,13 @@ import os
 
 import pdfkit
 from docx import Document
+
+from utils import HistogramTools
 from utils.LogUtils import LogUtils
 from utils.SkinUtils import *
 from utils.SkinUtils import SkinUtils
+from utils.DistanceUtils import DistanceUtils
+from utils.HistogramTools import getDistanceByDifferentColorSpace
 from entity.ReportEntity import ReportEntity
 from utils.MyDateUtils import *
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
@@ -76,11 +80,20 @@ class ReportService:
             report.roiRGBDict = {}
             report.roiHSVDict = {}
             report.roiYCrCbDict = {}
+            report.roiHistograms = {}
             report.roiLabDict = {}
-            fig = plt.figure(figsize=(4, 4))
+            report.roiColorResults = {}
+            fig = plt.figure(figsize=(5, 5))
             # fig = plt.figure()
-            LogUtils.log("reportService", "getting roi colorspace...")
-            for (name, roi) in report.roiDict.items():
+            LogUtils.log("reportService", "正在获取ROI不同颜色空间报告...")
+            items = report.roiDict.items()
+            currentProgress = 50
+            maxProgress = 100
+            step = int((maxProgress-currentProgress) / len(items))
+            for (name, roi) in items:
+                nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
+                LogUtils.log("ReportService", "正在绘制" + nameCN + "的颜色空间分布曲线", progress=currentProgress)
+                currentProgress += step
                 fig.clear()
                 report.roiRGBDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_RGB))
                 fig.clear()
@@ -89,8 +102,13 @@ class ReportService:
                 report.roiLabDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_Lab))
                 fig.clear()
                 report.roiYCrCbDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_YCrCb))
+                fig.clear()
+                LogUtils.log("ReportService", "查询" + nameCN+ "的肤色中...")
+                report.roiHistograms[name], report.roiColorResults[name] = (
+                    getDistanceByDifferentColorSpace(fig, roi.img, name))
+
             report.drawImg = face.drawImg
-            LogUtils.log("reportService", "getting roi colorspace finished!")
+            LogUtils.log("reportService", "获取ROI不同颜色空间报告完成！")
             # report.faceColor = SkinUtils.roiTotalColorDetect(report.rois)
             # report.skinResult = SkinUtils.getResultByColor(report.rois)
             reports.append(report)

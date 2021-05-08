@@ -3,6 +3,7 @@ import numpy as np
 BASE_PATH = "G:\\PyCharmProgram\\FaceAnalyze"
 OUTPUT_PATH = BASE_PATH + "\\result"
 OPENCV_CASCADE_PATH = "G:\\PyCharmProgram\\FaceDetection\\FaceDetect"
+FONT_PATH = BASE_PATH + "\\fonts\\simsun.ttc"
 COLORDICT = {'blue': (255, 0, 0),
              'green': (0, 255, 0),
              'red': (0, 0, 255),

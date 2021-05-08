@@ -1,6 +1,7 @@
 import threading
 import time
-from utils.ImageUtils import getcvImgFromFigure
+from utils.ImageUtils import getcvImgFromFigure, keepSameShape, COLOR_SAMPLE_CN_NAME_BY_KEY, KEY_SAMPLE_YELLOW,KEY_SAMPLE_BLACK,KEY_SAMPLE_WHITE,KEY_SAMPLE_RED
+from core.const_var import FACIAL_LANDMARKS_NAME_DICT
 
 import cv2
 
@@ -32,6 +33,7 @@ class SkinUtils:
         # plt.subplot(3, 2, pos)
         for h, c, l in zip(hist, color, label):  # color: ('b', 'g', 'r'), zip:连接
             plt.plot(h, color=c, label=l)
+            # plt.bar([i for i in range(0, 256)], h, color=c, label=l)
 
     @staticmethod
     def _cal_color_his(image, range=[0, 256]):
@@ -77,31 +79,62 @@ class SkinUtils:
         for roi in rois:
             pass
 
-    # img_predict_roi_ting = cv2.resize(img_predict_roi_ting, img_sample_roi_ting.shape[::-1][1:3])
     @staticmethod
     def getDistanceByRGB(predict, sample):
-        """
-        去掉黑色像素，这是被肤色检测处理过的像素
-        :param predict:
-        :param sample:
-        :return:
-        """
-        x = predict.shape[0]
-        y = predict.shape[1]
-        dist_byloop = []
-        for i in range(x):
-            for j in range(y):
-                # 纯黑色不检测，因为这是被肤色检测处理过的像素
-                if (predict[i][j] == (0, 0, 0)).all() or (sample[i][j] == (0, 0, 0)).all():
-                    continue
+        def trimBlack(img):
+            k = 0
+            B, G, R = 0, 0, 0
+            for row in img:
+                for v in row:
+                    # 排除黑色
+                    # if v[0] != 0:
+                    if v[0] != 0 and v[1] != 0 and v[2] != 0:
+                        k = k + 1
+                        R += v[0]
+                        G += v[1]
+                        R += v[2]
+            # 计算出了LAB的均值
+            R0 = int(round(R / k))
+            G0 = int(round(G / k))
+            B0 = int(round(R / k))
+            return R0, G0, B0
 
-                A = predict[i][j]
-                B = sample[i][j]
-                # np.linalg.norm(A - B) 等同于
-                # np.sqrt(np.sum((A[0] - B[0])**2 + (A[1] - B[1])**2 +(A[2] - B[2])**2))
-                dist_byloop.append(np.linalg.norm(A - B))
-                # sum += np.sqrt(np.sum(np.square(predict[i][j] - sample[i][j])))
-        return np.mean(dist_byloop)
+        # predict_lab = cv2.cvtColor(predict, cv2.COLOR_BGR)
+        # sample_lab = cv2.cvtColor(sample, cv2.COLOR_BGR2Lab)
+        pr, pg, pb = trimBlack(predict)
+        sr, sg, sb = trimBlack(sample)
+
+        # distance = ((pa - sa) ** 2 + (pb - sb) ** 2) ** 0.5
+        distance = ((pr - sr) ** 2 + (pg - sg) ** 2 + (pb - sb) ** 2)
+        return distance
+
+    # # img_predict_roi_ting = cv2.resize(img_predict_roi_ting, img_sample_roi_ting.shape[::-1][1:3])
+    # @staticmethod
+    # def getDistanceByRGB(predict, sample):
+    #     """
+    #     去掉黑色像素，这是被肤色检测处理过的像素
+    #     :param predict:
+    #     :param sample:
+    #     :return:
+    #     """
+    #     predict, sample = keepSameShape(predict,sample)
+    #
+    #     x = predict.shape[0]
+    #     y = predict.shape[1]
+    #     dist_byloop = []
+    #     for i in range(x):
+    #         for j in range(y):
+    #             # 纯黑色不检测，因为这是被肤色检测处理过的像素
+    #             if (predict[i][j] == (0, 0, 0)).all() or (sample[i][j] == (0, 0, 0)).all():
+    #                 continue
+    #
+    #             A = predict[i][j]
+    #             B = sample[i][j]
+    #             # np.linalg.norm(A - B) 等同于
+    #             # np.sqrt(np.sum((A[0] - B[0])**2 + (A[1] - B[1])**2 +(A[2] - B[2])**2))
+    #             dist_byloop.append(np.linalg.norm(A - B))
+    #             # sum += np.sqrt(np.sum(np.square(predict[i][j] - sample[i][j])))
+    #     return np.mean(dist_byloop)
 
     @staticmethod
     def getDistanceByLab(predict, sample):
@@ -133,12 +166,13 @@ class SkinUtils:
         pl, pa, pb = trimBlack(predict_lab)
         sl, sa, sb = trimBlack(sample_lab)
 
-        # distance = ((pa - sa) ** 2 + (pb - sb) ** 2) ** 0.5
-        distance = ((pl - sl) ** 2 + (pa - sa) ** 2 + (pb - sb) ** 2)
+        distance = ((pa - sa) ** 2 + (pb - sb) ** 2) ** 0.5
+        # distance = ((pl - sl) ** 2 + (pa - sa) ** 2 + (pb - sb) ** 2)
+        # distance = ((pl - sl) ** 2 + (pa - sa) ** 2 + (pb - sb) ** 2)
         return distance
 
     @staticmethod
-    def getDistanceHSV(predict, sample):
+    def getDistanceByHSV(predict, sample):
         """
         :param predict:
         :param sample:
@@ -166,7 +200,8 @@ class SkinUtils:
         sample_hsv = cv2.cvtColor(sample, cv2.COLOR_BGR2HSV)
         ph, ps, pv = trimBlack(predict_hsv)
         sh, ss, sv = trimBlack(sample_hsv)
-        distance = ((ph - sh) ** 2 + (ps - ss) ** 2 + (pv - sv) ** 2)
+        # distance = ((ph - sh) ** 2 + (ps - ss) ** 2 + (pv - sv) ** 2)
+        distance = (ph - sh) ** 2
         return distance
 
     @staticmethod
@@ -214,16 +249,29 @@ class SkinUtils:
         # res = np.hstack([predict, sample])
         # cv2.imshow(name, res)
         return SkinUtils.getDistanceByRGB(predict, sample), SkinUtils.getDistanceByLab(predict,
-                                                                                       sample), SkinUtils.getDistanceHSV(
+                                                                                       sample), SkinUtils.getDistanceByHSV(
             predict, sample)
 
     @staticmethod
-    def getResultByColor(rois):
+    def getResulstByColor(rois, colors):
         pass
+    @staticmethod
+    def getResultByOneColor(roiKey, color):
+        # // TODO 更多的咨询
+        return FACIAL_LANDMARKS_NAME_DICT[roiKey] + "颜色偏向于:" + COLOR_SAMPLE_CN_NAME_BY_KEY[color]
 
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 def _color_space_show():
+    # fig1 = Figure()
+    # canvas = FigureCanvas(fig1)
+    # fig1 = Figure()
+    # fig1 = Figure()
+    # fig1 = Figure()
     fig1 = plt.figure()
+    plt.yticks([i for i in range(256)])
+    plt.title("hello")
     while videoCapture.isOpened():
         flag, img = videoCapture.read()
         if not flag:
@@ -250,6 +298,7 @@ def _color_space_show():
 
     videoCapture.release()
     cv2.destroyAllWindows()
+
 
 def _distance_test():
     pass

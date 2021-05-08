@@ -4,10 +4,10 @@ from core.const_var import *
 from core.FaceLandMark import faceDetection
 import cv2
 
-blackImg = cv2.imread("../../four_color_face/black.png")
-chiImg = cv2.imread("../../four_color_face/chi.png")
-whiteImg = cv2.imread("../../four_color_face/white.png")
-yellowImg = cv2.imread("../../four_color_face/yellow.png")
+blackImg = cv2.imread("../../four_color_face_sample/black.png")
+chiImg = cv2.imread("../../four_color_face_sample/chi.png")
+whiteImg = cv2.imread("../../four_color_face_sample/white.png")
+yellowImg = cv2.imread("../../four_color_face_sample/yellow.png")
 predict1Img = cv2.imread("../../faces/7.jpeg")
 predict2Img = cv2.imread("../../faces/5.JPG")
 predict3ImgWhite= cv2.imread("../../faces/white.jpg")

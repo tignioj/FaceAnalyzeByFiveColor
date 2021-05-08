@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1206</width>
-    <height>865</height>
+    <width>1375</width>
+    <height>1070</height>
    </rect>
   </property>
   <property name="font">
@@ -31,7 +31,7 @@
      <pointsize>-1</pointsize>
     </font>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="8,1,0">
+   <layout class="QVBoxLayout" name="verticalLayout_2" stretch="8,1,0,0">
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="5,2">
       <item>
@@ -46,7 +46,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap>images/process1.png</pixmap>
+            <pixmap>C:/Users/lili/.designer/backup/images/process1.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -121,7 +121,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QPushButton" name="button_SaveReport">
+              <widget class="QPushButton" name="button_seeReport">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -135,11 +135,11 @@
                 </font>
                </property>
                <property name="text">
-                <string>保存报告</string>
+                <string>查看报告</string>
                </property>
                <property name="icon">
                 <iconset>
-                 <normaloff>images/icons8_save_100px.png</normaloff>images/icons8_save_100px.png</iconset>
+                 <normaloff>C:/Users/lili/.designer/backup/images/icons8_save_100px.png</normaloff>C:/Users/lili/.designer/backup/images/icons8_save_100px.png</iconset>
                </property>
                <property name="iconSize">
                 <size>
@@ -156,8 +156,14 @@
            </item>
            <item>
             <widget class="QTextEdit" name="textEdit_Report">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
              <property name="styleSheet">
-              <string notr="true"/>
+              <string notr="true">font-size:14px</string>
+             </property>
+             <property name="placeholderText">
+              <string>点击左下角的分析按钮，系统会自动产生报告</string>
              </property>
             </widget>
            </item>
@@ -185,7 +191,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>images/icons8_face_id_100px.png</normaloff>images/icons8_face_id_100px.png</iconset>
+            <normaloff>C:/Users/lili/.designer/backup/images/icons8_face_id_100px.png</normaloff>C:/Users/lili/.designer/backup/images/icons8_face_id_100px.png</iconset>
           </property>
           <property name="iconSize">
            <size>
@@ -257,9 +263,9 @@
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="radioButton_EdgeTract">
+                <widget class="QRadioButton" name="radioButton_SkinDetect">
                  <property name="text">
-                  <string>边缘检测</string>
+                  <string>肤色检测</string>
                  </property>
                  <property name="checkable">
                   <bool>true</bool>
@@ -331,7 +337,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>images/GDPUlogo_outline.png</pixmap>
+         <pixmap>C:/Users/lili/.designer/backup/images/GDPUlogo_outline.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>false</bool>
@@ -347,9 +353,55 @@
       </property>
      </widget>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetFixedSize</enum>
+      </property>
+      <item>
+       <widget class="QProgressBar" name="progressBar">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="textVisible">
+         <bool>true</bool>
+        </property>
+        <property name="textDirection">
+         <enum>QProgressBar::TopToBottom</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>
@@ -374,7 +426,7 @@
   <action name="actionOpenImage">
    <property name="icon">
     <iconset>
-     <normaloff>images/icons8_photo_gallery_100px.png</normaloff>images/icons8_photo_gallery_100px.png</iconset>
+     <normaloff>C:/Users/lili/.designer/backup/images/icons8_photo_gallery_100px.png</normaloff>C:/Users/lili/.designer/backup/images/icons8_photo_gallery_100px.png</iconset>
    </property>
    <property name="text">
     <string>OpenImage</string>
@@ -386,7 +438,7 @@
   <action name="actionOpenCamera">
    <property name="icon">
     <iconset>
-     <normaloff>images/icons8_camera_100px.png</normaloff>images/icons8_camera_100px.png</iconset>
+     <normaloff>C:/Users/lili/.designer/backup/images/icons8_camera_100px.png</normaloff>C:/Users/lili/.designer/backup/images/icons8_camera_100px.png</iconset>
    </property>
    <property name="text">
     <string>OpenCamera</string>
@@ -398,7 +450,7 @@
   <action name="actionCloseCamera">
    <property name="icon">
     <iconset>
-     <normaloff>images/icons8_no_camera_32px.png</normaloff>images/icons8_no_camera_32px.png</iconset>
+     <normaloff>C:/Users/lili/.designer/backup/images/icons8_no_camera_32px.png</normaloff>C:/Users/lili/.designer/backup/images/icons8_no_camera_32px.png</iconset>
    </property>
    <property name="text">
     <string>CloseCamera</string>
@@ -410,7 +462,7 @@
   <action name="actionReset">
    <property name="icon">
     <iconset>
-     <normaloff>images/icons8_reset_100px.png</normaloff>images/icons8_reset_100px.png</iconset>
+     <normaloff>C:/Users/lili/.designer/backup/images/icons8_reset_100px.png</normaloff>C:/Users/lili/.designer/backup/images/icons8_reset_100px.png</iconset>
    </property>
    <property name="text">
     <string>ResetWorkSpace</string>
@@ -423,18 +475,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>radioButton_EdgeTract</sender>
+   <sender>radioButton_SkinDetect</sender>
    <signal>toggled(bool)</signal>
    <receiver>horizontalSlider_EdgeTract</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>921</x>
-     <y>755</y>
+     <x>1430</x>
+     <y>1034</y>
     </hint>
     <hint type="destinationlabel">
-     <x>842</x>
-     <y>791</y>
+     <x>981</x>
+     <y>1073</y>
     </hint>
    </hints>
   </connection>

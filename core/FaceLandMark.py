@@ -94,7 +94,7 @@ class __FaceDetect:
         # todayPath = OUTPUT_PATH + "\\" + getTodayYearMonthDayHourMinSec()
         # if not os.path.isdir(todayPath):
         #     os.mkdir(todayPath)
-        LogUtils.log("FaceLandMark", "start detect by img")
+        LogUtils.log("FaceLandMark", "开始分析图片", progress=15)
 
         detectedFaces = []
         copy = img.copy()
@@ -116,7 +116,7 @@ class __FaceDetect:
             fe.landMark64 = shape
             shape = self._shape_to_np(shape)
             for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
-                LogUtils.log("FaceLandMark", "提取ROI'" + name_CN + "...")
+                LogUtils.log("FaceLandMark", "提取ROI'" + name_CN + "...", progress=20)
                 roiEntity = self.__ROIService.getROI(nameKey, shape, img, face)
                 # (4. ROI
                 fe.landMarkROIDict[nameKey] = roiEntity
