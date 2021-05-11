@@ -82,7 +82,13 @@ def _getSampleDict():
 _sammpleDict = None
 
 
+
 def getSampleDict():
+    """
+    获取样本，方法：
+
+    :return:
+    """
     global _sammpleDict
     if _sammpleDict is None:
         _sammpleDict = _getSampleDict()

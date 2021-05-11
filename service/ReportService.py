@@ -3,6 +3,7 @@ import os
 import pdfkit
 from docx import Document
 
+from multiprocessing import Pool
 from utils import HistogramTools
 from utils.LogUtils import LogUtils
 from utils.SkinUtils import *
@@ -67,6 +68,26 @@ class ReportService:
         word.Quit(constants.wdDoNotSaveChanges)
 
     @staticmethod
+    def long_time_task(roiName, img, colorMode):
+        """
+        多线程执行的方法
+        :param roiName:
+        :param img:
+        :param colorMode:
+        :return:
+        """
+        fig = plt.figure()
+        print('Run task %s (%s)...' % (roiName, os.getpid()))
+        start = time.time()
+        if colorMode == COLOR_MODE_RGB:
+            draw = (SkinUtils.skinHistogram(fig, img, colorMode))
+        else:
+            draw = (SkinUtils.skinScatter(fig, img, colorMode, roiName))
+        end = time.time()
+        print('Task %s runs %0.2f seconds.' % (roiName, (end - start)))
+        return draw
+
+    @staticmethod
     def generateReports(detectedFaces):
         LogUtils.log("reportService", "start generate report from faces...")
         reports = []
@@ -89,24 +110,42 @@ class ReportService:
             items = report.roiDict.items()
             currentProgress = 50
             maxProgress = 100
-            step = int((maxProgress-currentProgress) / len(items))
+            step = int((maxProgress - currentProgress) / len(items))
             for (name, roi) in items:
                 nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
                 LogUtils.log("ReportService", "正在绘制" + nameCN + "的颜色空间分布曲线", progress=currentProgress)
+                p = Pool()
                 currentProgress += step
-                fig.clear()
-                report.roiRGBDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_RGB))
-                fig.clear()
-                report.roiHSVDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_HSV))
-                fig.clear()
-                report.roiLabDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_Lab))
-                fig.clear()
-                report.roiYCrCbDict[name] = (SkinUtils.skinHistogram(fig, roi.img, COLOR_MODE_YCrCb))
-                fig.clear()
-                LogUtils.log("ReportService", "查询" + nameCN+ "的肤色中...")
-                report.roiHistograms[name], report.roiColorResults[name] = (
-                    getDistanceByDifferentColorSpace(fig, roi.img, name))
 
+                rgbDict = p.apply_async(ReportService.long_time_task,
+                                        args=(name, roi.img, COLOR_MODE_RGB))
+
+                hsvDict = p.apply_async(ReportService.long_time_task,
+                                        args=(name, roi.img, COLOR_MODE_HSV))
+
+                LabDict = p.apply_async(ReportService.long_time_task,
+                                        args=(name, roi.img, COLOR_MODE_Lab))
+
+                YCrCbDict = p.apply_async(ReportService.long_time_task,
+                                          args=(name, roi.img, COLOR_MODE_YCrCb))
+
+                LogUtils.log("ReportService", "查询" + nameCN + "的肤色中...")
+
+                res = p.apply_async(ReportService.threadGetDistance,
+                                    args=(roi.img, name))
+
+                p.close()
+                p.join()
+                report.roiRGBDict[name] = rgbDict.get()
+                report.roiHSVDict[name] = hsvDict.get()
+                report.roiLabDict[name] = LabDict.get()
+                report.roiYCrCbDict[name] = YCrCbDict.get()
+
+                res = res.get()
+                report.roiHistograms[name] = res['hist']
+                report.roiColorResults[name] = res['result']
+
+                LogUtils.log("ReportService", "线程为" + nameCN + "绘图完毕!")
             report.drawImg = face.drawImg
             LogUtils.log("reportService", "获取ROI不同颜色空间报告完成！")
             # report.faceColor = SkinUtils.roiTotalColorDetect(report.rois)
@@ -115,3 +154,9 @@ class ReportService:
 
         LogUtils.log("reportService", "reports generate finished!")
         return reports
+
+    @staticmethod
+    def threadGetDistance(img, name):
+        fig = plt.figure()
+        hist, result = getDistanceByDifferentColorSpace(fig, img, name)
+        return {'hist': hist, 'result': result}

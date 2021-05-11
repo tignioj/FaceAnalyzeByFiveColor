@@ -1,7 +1,10 @@
 import threading
 import time
+
+from utils import ImageUtils
 from utils.ImageUtils import getcvImgFromFigure, keepSameShape, COLOR_SAMPLE_CN_NAME_BY_KEY, KEY_SAMPLE_YELLOW, \
     KEY_SAMPLE_BLACK, KEY_SAMPLE_WHITE, KEY_SAMPLE_RED
+from core.const_var import *
 from core.const_var import FACIAL_LANDMARKS_NAME_DICT
 
 import cv2
@@ -18,7 +21,15 @@ COLOR_MODE_YCrCb = 3
 
 
 class ColorModeNotAllowException(Exception):
-    pass
+    def __init__(self, expression=None, message=None):
+        self.expression = expression
+        self.message = message
+
+
+class ScatterException(Exception):
+    def __init__(self, expression=None, message=None):
+        self.expression = expression
+        self.message = message
 
 
 class SkinUtils:
@@ -34,8 +45,39 @@ class SkinUtils:
         # return SkinTrimUtils.YCrCb(img)
 
     @staticmethod
-    def showScatter(img):
-        pass
+    def getFourColorSampleByROIName(roiName):
+        d = ImageUtils.getSampleDict()
+
+        red = d[ImageUtils.KEY_SAMPLE_RED]
+        yellow = d[ImageUtils.KEY_SAMPLE_YELLOW]
+        black = d[ImageUtils.KEY_SAMPLE_BLACK]
+        white = d[ImageUtils.KEY_SAMPLE_WHITE]
+
+        redSample = red[roiName]
+        yellowSample = yellow[roiName]
+        blackSample = black[roiName]
+        whiteSample = white[roiName]
+
+        return redSample, yellowSample, blackSample, whiteSample
+
+    @staticmethod
+    def showScatter(a, b, labelX, labelY, roiName):
+        # draw predict
+        plt.scatter(a, b, alpha=0.5, c='green', label=roiName)
+        # draw sample
+        redSample, yellowSample, blackSample, whiteSample = SkinUtils.getFourColorSampleByROIName(roiName)
+
+        def drawSample(sample, color=None, label=None):
+            # sample = cv2.resize(sample, (50,50))
+            plt.scatter(sample[:, :, 0].flatten(), sample[:, :, 1].flatten(), alpha=0.5, c=color, label=label)
+
+        drawSample(redSample, "red", "red")
+        drawSample(yellowSample, "yellow", "yellow")
+        drawSample(whiteSample, "lightBlue", "white")
+        drawSample(blackSample, "purple", "black")
+
+        plt.xlabel(labelX)
+        plt.ylabel(labelY)
 
     @staticmethod
     def show_histogram(hist, title, color, label=['a', 'b', 'c']):
@@ -80,30 +122,36 @@ class SkinUtils:
         plt.legend()
         return getcvImgFromFigure(fig)
 
+
+
+
+
     @staticmethod
-    def skinScatter(fig, img=None, colormode=COLOR_MODE_HSV):
+    def skinScatter(fig, img=None, colormode=COLOR_MODE_HSV, roiName=None):
         """
         绘制散点图
         :param img: 接受一个BGR模式的图片
         :param colormode:  选择绘制什么散点图
         :return:
         """
+        if roiName is None:
+            raise ScatterException("roi名字不能为空！")
         # fig = plt.figure(figsize=(12, 8))  # 画布大小
         img = SkinUtils.trimSkin(img)
         if colormode == COLOR_MODE_RGB:
-            # SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "RGB", ('b', 'g', 'r'), ['r', 'g', 'b'])
-            raise ColorModeNotAllowException()
+            raise ColorModeNotAllowException("不支持RGB二维散点图")
         elif colormode == COLOR_MODE_HSV:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            # SkinUtils.showScatter(img, "HSV", ('b', 'g', 'r'), ['H', 'S', 'V'])
+            h, s, v = cv2.split(img)
+            SkinUtils.showScatter(h.flatten(), s.flatten(), "H", "S", roiName)
         elif colormode == COLOR_MODE_Lab:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
-            # SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "Lab", ('b', 'g', 'r'), ['L', 'a', 'b'])
-            pass
+            L, a, b = cv2.split(img)
+            SkinUtils.showScatter(a.flatten(), b.flatten(), "a", "b", roiName)
         elif colormode == COLOR_MODE_YCrCb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-            # SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "YCrCb", ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'])
-            pass
+            Y, Cr, Cb = cv2.split(img)
+            SkinUtils.showScatter(Cr.flatten(), Cb.flatten(), "Cr", "Cb", roiName)
         else:
             pass
         plt.legend()
