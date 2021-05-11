@@ -121,7 +121,7 @@ class ReportService:
                 nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
                 LogUtils.log("ReportService", "开启线程为" + nameCN + "绘图中... ")
                 result[name] = p.apply_async(ReportService.thread_roi_process,
-                                             args=(name, roi, sampleDict, currentProgress,))
+                                             args=(name, roi, sampleDict, currentProgress))
 
 
                 # p.apply_async(ReportService.long_time_task,     args=(data, "plot" + str(i),))
