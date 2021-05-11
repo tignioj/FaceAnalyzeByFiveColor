@@ -10,8 +10,10 @@ def getTodayYearMonthDay():
     "返回格式为：'20210503'"
     return datetime.today().strftime('%Y%m%d')
 
+
 def getTodayYearMonthDayHourMinSec():
     "返回格式为：'20210503_02_11_13'"
     return datetime.today().strftime('%Y%m%d_%H_%M_%S')
 
-print(getTodayDateTime())
+
+print("MyDateUtils", getTodayDateTime())

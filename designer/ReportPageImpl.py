@@ -3,7 +3,7 @@ from PyQt5.QtCore import *
 import imutils
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from utils.ImageUtils import nparrayToQPixMap, cvshow, keepSameShape, putTextCN, COLOR_SAMPLE_CN_NAME_BY_KEY
+from utils.ImageUtils import ImgUtils
 import sys
 from designer.ReportPage import Ui_MainWindow as ReportPage
 from core.const_var import *
@@ -123,7 +123,7 @@ class ReportPageImpl(QMainWindow, ReportPage):
         for r in reports:
             sz = self.label_face_drawed.size()
             img = imutils.resize(r.drawImg, width=sz.width(), height=sz.height())
-            pimg = nparrayToQPixMap(img)
+            pimg = ImgUtils.nparrayToQPixMap(img)
             self.label_face_drawed.setPixmap(pimg)
             self.label_face_drawed.largePixMap = pimg
             self.label_username.setText(str(r.username))
@@ -169,15 +169,15 @@ class ReportPageImpl(QMainWindow, ReportPage):
             sampleImg = diffImg['sample']
             sampleImgTrim = diffImg['sampleTrim']
 
-            p, s = keepSameShape(predictImg, sampleImg)
-            pt, st = keepSameShape(predictImgTrim, sampleImgTrim)
+            p, s = ImgUtils.keepSameShape(predictImg, sampleImg)
+            pt, st = ImgUtils.keepSameShape(predictImgTrim, sampleImgTrim)
 
             LogUtils.log("ReportPageImpl", "组合图片中..")
-            p = putTextCN(p, "预测:" + COLOR_SAMPLE_CN_NAME_BY_KEY[resultColor], (1, 1), COLORDICT['blue'])
-            s = putTextCN(s, "样本", (1, 1), COLORDICT['green'])
+            p = ImgUtils.putTextCN(p, "预测:" + ImgUtils.COLOR_SAMPLE_CN_NAME_BY_KEY[resultColor], (1, 1), COLORDICT['blue'])
+            s = ImgUtils.putTextCN(s, "样本", (1, 1), COLORDICT['green'])
 
-            pt = putTextCN(pt, "提纯后", (1, 1), COLORDICT['blue'])
-            st = putTextCN(st, "提纯后", (1, 1), COLORDICT['green'])
+            pt = ImgUtils.putTextCN(pt, "提纯后", (1, 1), COLORDICT['blue'])
+            st = ImgUtils.putTextCN(st, "提纯后", (1, 1), COLORDICT['green'])
 
             combineImgRow1 = np.vstack([p, s])
             combineImgRow2 = np.vstack([pt, st])
@@ -220,5 +220,5 @@ class ReportPageImpl(QMainWindow, ReportPage):
         cv2.destroyWindow(title)
 
     def setCvImgToLabel(self, label, cvImg, width=None, height=None):
-        label.largePixMap = nparrayToQPixMap(cvImg)
-        label.setPixmap(nparrayToQPixMap(cvImg, width, height))
+        label.largePixMap = ImgUtils.nparrayToQPixMap(cvImg)
+        label.setPixmap(ImgUtils.nparrayToQPixMap(cvImg, width, height))

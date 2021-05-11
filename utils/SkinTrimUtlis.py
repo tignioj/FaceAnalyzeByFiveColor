@@ -25,7 +25,6 @@ import imutils
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.hsv_rgb_ycrcb import Skin_Detect
-from utils.ImageUtils import cvshow
 
 
 class SkinTrimUtils:

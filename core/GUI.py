@@ -15,7 +15,7 @@ from designer.GUIDesigner import *
 from core.faceHealthDetect import *
 from FaceLandMark import faceDetection
 from utils import ImageUtils
-from utils.ImageUtils import nparrayToQPixMap
+from utils.ImageUtils import ImgUtils
 
 
 class MainGUI(QMainWindow, Ui_MainWindow):
@@ -70,7 +70,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.EdgeTractThrehold2 = self.EdgeTractThrehold1 + 200
         self.prevFrameTime = 0
         self.newFrameTime = 0
-        self.videoCapture = cv2.VideoCapture(self.CAM_NUM)
+        self.videoCapture = cv2.VideoCapture(self.CAM_NUM, cv2.CAP_DSHOW)
 
         # UI初始化
         self.setupUi(self)
@@ -167,7 +167,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         LogUtils.log("GUI-openCamera", "准备打开摄像头, 更新UI的计时器状态：", self.cameraTimer.isActive())
         self.appendInfo("尝试打开摄像头")
         if not self.cameraTimer.isActive():
-            flag = self.videoCapture.open(self.CAM_NUM)
+            flag = self.videoCapture.open(self.CAM_NUM, cv2.CAP_DSHOW)
             if not flag:
                 QtWidgets.QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QtWidgets.QMessageBox.Ok)
                 self.appendError("摄像头未能成功打开！")
@@ -248,11 +248,11 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         res = paramMap['res']
         LogUtils.log("GUI", "拿到结果", res)
 
-        self.showInfo("诊断完成!")
+        self.appendInfo("诊断完成!")
         if type(res) is FaceNotFoundException:
             self.showloadingGIF(False)
 
-            self.label_showCamera.setPixmap(nparrayToQPixMap(res.expression, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]))
+            self.label_showCamera.setPixmap(ImgUtils.nparrayToQPixMap(res.expression, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]))
             self.showError("未能识别到面孔！请重置工作区再试试看。" + str(res.message))
             return
 
@@ -261,7 +261,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
 
         img = r.drawImg
         # qimg = changeFrameByLableSizeKeepRatio(img, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
-        qimg = nparrayToQPixMap(img, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        qimg = ImgUtils.nparrayToQPixMap(img, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
 
         self.label_showCamera.setPixmap(qimg)
         self.button_analyze.setEnabled(True)
@@ -391,7 +391,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
             return
         # img = QtGui.QPixmap(imagePath).scaled(self.label_showCamera.width(), self.label_showCamera.height())
         self.image = cv2.imread(imagePath, cv2.IMREAD_COLOR)
-        qpixMap = nparrayToQPixMap(self.image, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        qpixMap = ImgUtils.nparrayToQPixMap(self.image, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
         self.label_showCamera.setPixmap(qpixMap)
         self.labelImageState = MainGUI.__IMAGE_LABEL_STATE_USING_FILE
 

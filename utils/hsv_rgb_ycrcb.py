@@ -285,30 +285,30 @@ def testIMG():
     """
 
 
-def testCamera():
-    test = Skin_Detect()
-    while videoCapture.isOpened():
-        # image = cv2.imread("../..")
-        flag, frame = videoCapture.read()
-        if not flag:
-            break
+# def testCamera():
+#     test = Skin_Detect()
+#     while videoCapture.isOpened():
+#         # image = cv2.imread("../..")
+#         flag, frame = videoCapture.read()
+#         if not flag:
+#             break
+#
+#         Frame_ = frame
+#         skin_ = test.Rule_B(frame, False)
+#         skin_bw = skin_.astype(np.uint8)
+#         skin_bw *= 255
+#         seg = cv2.bitwise_and(Frame_, Frame_, mask=skin_bw)
+#
+#         img = imutils.resize(seg, width=800)
+#         cv2.imshow('melt', img)
+#         # Hit 'q' on the keyboard to quit!
+#         if cv2.waitKey(1) & 0xFF == ord('q'):
+#             break
+#
+#     videoCapture.release()
+#     cv2.destroyAllWindows()
+#
 
-        Frame_ = frame
-        skin_ = test.Rule_B(frame, False)
-        skin_bw = skin_.astype(np.uint8)
-        skin_bw *= 255
-        seg = cv2.bitwise_and(Frame_, Frame_, mask=skin_bw)
-
-        img = imutils.resize(seg, width=800)
-        cv2.imshow('melt', img)
-        # Hit 'q' on the keyboard to quit!
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    videoCapture.release()
-    cv2.destroyAllWindows()
-
-
-videoCapture = cv2.VideoCapture(1)
-if __name__ == "__main__":
-    testCamera()
+# videoCapture = cv2.VideoCapture(1)
+# if __name__ == "__main__":
+#     testCamera()

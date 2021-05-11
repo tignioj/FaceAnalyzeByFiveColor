@@ -9,7 +9,7 @@ from utils.LogUtils import LogUtils
 from utils.SkinUtils import *
 from utils.SkinUtils import SkinUtils
 from utils.DistanceUtils import DistanceUtils
-from utils.HistogramTools import getDistanceByDifferentColorSpace
+from utils.HistogramTools import HistogramTools
 from entity.ReportEntity import ReportEntity
 from utils.MyDateUtils import *
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
@@ -68,7 +68,7 @@ class ReportService:
         word.Quit(constants.wdDoNotSaveChanges)
 
     @staticmethod
-    def long_time_task(roiName, img, colorMode):
+    def long_time_task(roiName, img, colorMode, sampleDict=None):
         """
         多线程执行的方法
         :param roiName:
@@ -82,7 +82,7 @@ class ReportService:
         if colorMode == COLOR_MODE_RGB:
             draw = (SkinUtils.skinHistogram(fig, img, colorMode))
         else:
-            draw = (SkinUtils.skinScatter(fig, img, colorMode, roiName))
+            draw = (SkinUtils.skinScatter(fig, img, colorMode, roiName, sampleDict))
         end = time.time()
         print('Task %s runs %0.2f seconds.' % (roiName, (end - start)))
         return draw
@@ -111,43 +111,41 @@ class ReportService:
             currentProgress = 50
             maxProgress = 100
             step = int((maxProgress - currentProgress) / len(items))
+
+            sstime = time.time()
+            result = {}
+            p = Pool(len(items))
+            sampleDict = ImgUtils.getSampleDict()
+            for (name, roi) in items:
+
+                nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
+                LogUtils.log("ReportService", "开启线程为" + nameCN + "绘图中... ")
+                result[name] = p.apply_async(ReportService.thread_roi_process,
+                                             args=(name, roi, sampleDict, currentProgress,))
+
+
+                # p.apply_async(ReportService.long_time_task,     args=(data, "plot" + str(i),))
+
+            p.close()
+            p.join()
+
             for (name, roi) in items:
                 nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
-                LogUtils.log("ReportService", "正在绘制" + nameCN + "的颜色空间分布曲线", progress=currentProgress)
-                p = Pool()
-                currentProgress += step
-
-                rgbDict = p.apply_async(ReportService.long_time_task,
-                                        args=(name, roi.img, COLOR_MODE_RGB))
-
-                hsvDict = p.apply_async(ReportService.long_time_task,
-                                        args=(name, roi.img, COLOR_MODE_HSV))
-
-                LabDict = p.apply_async(ReportService.long_time_task,
-                                        args=(name, roi.img, COLOR_MODE_Lab))
-
-                YCrCbDict = p.apply_async(ReportService.long_time_task,
-                                          args=(name, roi.img, COLOR_MODE_YCrCb))
-
-                LogUtils.log("ReportService", "查询" + nameCN + "的肤色中...")
-
-                res = p.apply_async(ReportService.threadGetDistance,
-                                    args=(roi.img, name))
-
-                p.close()
-                p.join()
-                report.roiRGBDict[name] = rgbDict.get()
-                report.roiHSVDict[name] = hsvDict.get()
-                report.roiLabDict[name] = LabDict.get()
-                report.roiYCrCbDict[name] = YCrCbDict.get()
-
-                res = res.get()
+                LogUtils.log("ReportService", "线程正在为" + nameCN + "绘图中... ", progress=currentProgress)
+                drawItems = result[name].get()
+                report.roiRGBDict[name] = drawItems['rgb']
+                report.roiHSVDict[name] = drawItems['hsv']
+                report.roiYCrCbDict[name] = drawItems['ycrcb']
+                report.roiLabDict[name] = drawItems['lab']
+                res = drawItems['res']
                 report.roiHistograms[name] = res['hist']
                 report.roiColorResults[name] = res['result']
+                currentProgress += step
+                LogUtils.log("ReportService", "线程为" + nameCN + "绘图完毕！", progress=currentProgress)
 
-                LogUtils.log("ReportService", "线程为" + nameCN + "绘图完毕!")
             report.drawImg = face.drawImg
-            LogUtils.log("reportService", "获取ROI不同颜色空间报告完成！")
+            eetime = time.time()
+            LogUtils.log("reportService", "获取ROI不同颜色空间报告完成！总用时:" + str(eetime - sstime))
             # report.faceColor = SkinUtils.roiTotalColorDetect(report.rois)
             # report.skinResult = SkinUtils.getResultByColor(report.rois)
             reports.append(report)
@@ -156,7 +154,39 @@ class ReportService:
         return reports
 
     @staticmethod
-    def threadGetDistance(img, name):
+    def thread_roi_process(name, roi, sampleDict, currentProgress):
+        stime = time.time()
+        nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
+        LogUtils.log("ReportService", "正在绘制" + nameCN + "的颜色空间分布曲线")
+        nameCN = FACIAL_LANDMARKS_NAME_DICT[roi.roiName]
+        rgbDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_RGB, sampleDict)
+
+        hsvDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_HSV, sampleDict)
+
+        LabDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_Lab, sampleDict)
+
+        YCrCbDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_YCrCb, sampleDict)
+
+        LogUtils.log("ReportService", "查询" + nameCN + "的肤色中...")
+
+        res = ReportService.threadGetDistance(roi.img, name, sampleDict)
+
+        etime = time.time()
+        LogUtils.log("ReportService", "线程为" + nameCN + "绘图完毕!, 用时:" + str(etime - stime), progress=currentProgress)
+        return {
+            'rgb': rgbDict,
+            'lab': LabDict,
+            'hsv': hsvDict,
+            'ycrcb': YCrCbDict,
+            'res': res
+        }
+
+    @staticmethod
+    def threadGetDistance(img, name, sampleDict):
         fig = plt.figure()
-        hist, result = getDistanceByDifferentColorSpace(fig, img, name)
-        return {'hist': hist, 'result': result}
+        roiHistograms, roiColorResults, = HistogramTools.getDistanceByDifferentColorSpace(fig, img, name, sampleDict)
+        d = {
+            'hist': roiHistograms,
+            'result': roiColorResults,
+        }
+        return d

@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 from utils.SkinUtils import SkinUtils
-from utils.ImageUtils import KEY_SAMPLE_YELLOW, KEY_SAMPLE_BLACK, KEY_SAMPLE_RED, KEY_SAMPLE_WHITE
+from utils.ImageUtils import ImgUtils
 
 
 class DistanceUtils:
@@ -54,7 +54,7 @@ class DistanceUtils:
         hsvs = [HSV_dist_red, HSV_dist_yellow, HSV_dist_black, HSV_dist_white]
         rgbs = [RGB_dist_red, RGB_dist_yellow, RGB_dist_black, RGB_dist_white]
 
-        colors = [KEY_SAMPLE_RED, KEY_SAMPLE_YELLOW, KEY_SAMPLE_BLACK, KEY_SAMPLE_WHITE]
+        colors = [ImgUtils.KEY_SAMPLE_RED, ImgUtils.KEY_SAMPLE_YELLOW, ImgUtils.KEY_SAMPLE_BLACK, ImgUtils.KEY_SAMPLE_WHITE]
 
         def getColorByMinimunDistance(arr):
             index = arr.index(min(arr))

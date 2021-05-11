@@ -6,7 +6,7 @@ import os
 from entity.ROIEntity import ROIEntity
 from entity.FaceEntity import FaceEntity
 from utils.SkinUtils import SkinUtils
-from utils.ImageUtils import cvshow
+from utils.ImageUtils import ImgUtils
 import cv2
 import dlib
 import numpy as np

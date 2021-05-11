@@ -1,9 +1,7 @@
 import threading
 import time
 
-from utils import ImageUtils
-from utils.ImageUtils import getcvImgFromFigure, keepSameShape, COLOR_SAMPLE_CN_NAME_BY_KEY, KEY_SAMPLE_YELLOW, \
-    KEY_SAMPLE_BLACK, KEY_SAMPLE_WHITE, KEY_SAMPLE_RED
+from utils.ImageUtils import ImgUtils
 from core.const_var import *
 from core.const_var import FACIAL_LANDMARKS_NAME_DICT
 
@@ -45,13 +43,13 @@ class SkinUtils:
         # return SkinTrimUtils.YCrCb(img)
 
     @staticmethod
-    def getFourColorSampleByROIName(roiName):
-        d = ImageUtils.getSampleDict()
+    def getFourColorSampleByROIName(roiName, sampleDict):
+        d = sampleDict
 
-        red = d[ImageUtils.KEY_SAMPLE_RED]
-        yellow = d[ImageUtils.KEY_SAMPLE_YELLOW]
-        black = d[ImageUtils.KEY_SAMPLE_BLACK]
-        white = d[ImageUtils.KEY_SAMPLE_WHITE]
+        red = d[ImgUtils.KEY_SAMPLE_RED]
+        yellow = d[ImgUtils.KEY_SAMPLE_YELLOW]
+        black = d[ImgUtils.KEY_SAMPLE_BLACK]
+        white = d[ImgUtils.KEY_SAMPLE_WHITE]
 
         redSample = red[roiName]
         yellowSample = yellow[roiName]
@@ -61,11 +59,11 @@ class SkinUtils:
         return redSample, yellowSample, blackSample, whiteSample
 
     @staticmethod
-    def showScatter(a, b, labelX, labelY, roiName):
+    def showScatter(a, b, labelX, labelY, roiName, sampleDict):
         # draw predict
         plt.scatter(a, b, alpha=0.5, c='green', label=roiName)
         # draw sample
-        redSample, yellowSample, blackSample, whiteSample = SkinUtils.getFourColorSampleByROIName(roiName)
+        redSample, yellowSample, blackSample, whiteSample = SkinUtils.getFourColorSampleByROIName(roiName, sampleDict)
 
         def drawSample(sample, color=None, label=None):
             # sample = cv2.resize(sample, (50,50))
@@ -120,14 +118,14 @@ class SkinUtils:
         else:
             pass
         plt.legend()
-        return getcvImgFromFigure(fig)
+        return ImgUtils.getcvImgFromFigure(fig)
 
 
 
 
 
     @staticmethod
-    def skinScatter(fig, img=None, colormode=COLOR_MODE_HSV, roiName=None):
+    def skinScatter(fig, img=None, colormode=COLOR_MODE_HSV, roiName=None, sampleDict=None):
         """
         绘制散点图
         :param img: 接受一个BGR模式的图片
@@ -143,19 +141,19 @@ class SkinUtils:
         elif colormode == COLOR_MODE_HSV:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
             h, s, v = cv2.split(img)
-            SkinUtils.showScatter(h.flatten(), s.flatten(), "H", "S", roiName)
+            SkinUtils.showScatter(h.flatten(), s.flatten(), "H", "S", roiName, sampleDict)
         elif colormode == COLOR_MODE_Lab:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
             L, a, b = cv2.split(img)
-            SkinUtils.showScatter(a.flatten(), b.flatten(), "a", "b", roiName)
+            SkinUtils.showScatter(a.flatten(), b.flatten(), "a", "b", roiName, sampleDict)
         elif colormode == COLOR_MODE_YCrCb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
             Y, Cr, Cb = cv2.split(img)
-            SkinUtils.showScatter(Cr.flatten(), Cb.flatten(), "Cr", "Cb", roiName)
+            SkinUtils.showScatter(Cr.flatten(), Cb.flatten(), "Cr", "Cb", roiName, sampleDict)
         else:
             pass
         plt.legend()
-        return getcvImgFromFigure(fig)
+        return ImgUtils.getcvImgFromFigure(fig)
 
     @staticmethod
     def skinColorDetect(img):
@@ -318,7 +316,7 @@ class SkinUtils:
     @staticmethod
     def getResultByOneColor(roiKey, color):
         # // TODO 更多的咨询
-        return FACIAL_LANDMARKS_NAME_DICT[roiKey] + "颜色偏向于:" + COLOR_SAMPLE_CN_NAME_BY_KEY[color]
+        return FACIAL_LANDMARKS_NAME_DICT[roiKey] + "颜色偏向于:" + ImgUtils.COLOR_SAMPLE_CN_NAME_BY_KEY[color]
 
     @staticmethod
     def trimSkinRealTime(img, scale):
@@ -328,48 +326,48 @@ class SkinUtils:
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+#
+# def _color_space_show():
+#     # fig1 = Figure()
+#     # canvas = FigureCanvas(fig1)
+#     # fig1 = Figure()
+#     # fig1 = Figure()
+#     # fig1 = Figure()
+#     fig1 = plt.figure()
+#     plt.yticks([i for i in range(256)])
+#     plt.title("hello")
+#     while videoCapture.isOpened():
+#         flag, img = videoCapture.read()
+#         if not flag:
+#             break
+#         fig1.clear()
+#         hist_rgb = SkinUtils.skinHistogram(fig1, img)
+#         cv2.imshow('hist_rgb', hist_rgb)
+#
+#         fig1.clear()
+#         hist_lab = SkinUtils.skinHistogram(fig1, img, COLOR_MODE_Lab)
+#         cv2.imshow('hist_lab', hist_lab)
+#
+#         fig1.clear()
+#         hist_hsv = SkinUtils.skinHistogram(fig1, img, COLOR_MODE_HSV)
+#         cv2.imshow('hist_hsv', hist_hsv)
+#
+#         fig1.clear()
+#         hist_ycrcb = SkinUtils.skinHistogram(fig1, img, COLOR_MODE_YCrCb)
+#         cv2.imshow('hist_ycrcb', hist_ycrcb)
+#
+#         k = cv2.waitKey(33) & 0xFF
+#         if k == 27:
+#             break
+#
+#     videoCapture.release()
+#     cv2.destroyAllWindows()
+#
+#
+# def _distance_test():
+#     pass
+#
 
-def _color_space_show():
-    # fig1 = Figure()
-    # canvas = FigureCanvas(fig1)
-    # fig1 = Figure()
-    # fig1 = Figure()
-    # fig1 = Figure()
-    fig1 = plt.figure()
-    plt.yticks([i for i in range(256)])
-    plt.title("hello")
-    while videoCapture.isOpened():
-        flag, img = videoCapture.read()
-        if not flag:
-            break
-        fig1.clear()
-        hist_rgb = SkinUtils.skinHistogram(fig1, img)
-        cv2.imshow('hist_rgb', hist_rgb)
-
-        fig1.clear()
-        hist_lab = SkinUtils.skinHistogram(fig1, img, COLOR_MODE_Lab)
-        cv2.imshow('hist_lab', hist_lab)
-
-        fig1.clear()
-        hist_hsv = SkinUtils.skinHistogram(fig1, img, COLOR_MODE_HSV)
-        cv2.imshow('hist_hsv', hist_hsv)
-
-        fig1.clear()
-        hist_ycrcb = SkinUtils.skinHistogram(fig1, img, COLOR_MODE_YCrCb)
-        cv2.imshow('hist_ycrcb', hist_ycrcb)
-
-        k = cv2.waitKey(33) & 0xFF
-        if k == 27:
-            break
-
-    videoCapture.release()
-    cv2.destroyAllWindows()
-
-
-def _distance_test():
-    pass
-
-
-videoCapture = cv2.VideoCapture(1)
-if __name__ == '__main__':
-    _color_space_show()
+# videoCapture = cv2.VideoCapture(1)
+# if __name__ == '__main__':
+#     _color_space_show()
