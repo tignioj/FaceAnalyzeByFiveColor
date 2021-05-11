@@ -83,8 +83,8 @@ class ReportService:
             report.roiHistograms = {}
             report.roiLabDict = {}
             report.roiColorResults = {}
-            fig = plt.figure(figsize=(5, 5))
-            # fig = plt.figure()
+            # fig = plt.figure(figsize=(5, 5))
+            fig = plt.figure()
             LogUtils.log("reportService", "正在获取ROI不同颜色空间报告...")
             items = report.roiDict.items()
             currentProgress = 50

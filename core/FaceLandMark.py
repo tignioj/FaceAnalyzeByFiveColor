@@ -64,6 +64,10 @@ class __FaceDetect:
         img = np.array(img_pil)
         return img
 
+    def skinDetect(self, img, scale=1):
+        frame = SkinUtils.trimSkinRealTime(img, scale)
+        return frame
+
     def faceDetectRealTime(self, img, scale=1):
         self.__scale = scale
         copy = img.copy()

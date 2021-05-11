@@ -5,7 +5,7 @@ Created on Fri Apr 26 20:49:32 2019
 @author: Tiny
 """
 # =============================================================================
-from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel
+from PyQt5.QtWidgets import QDialog, QGridLayout, QLabel, QDesktopWidget
 from numpy.ma import angle
 
 ''' Mouse event, each action response event can be customized '''
@@ -38,9 +38,12 @@ class PopUpDLG(QDialog):
         super(PopUpDLG, self).__init__()
         self.setObjectName("self")
         self.setContextMenuPolicy(QtCore.Qt.NoContextMenu)
-        self.resize(pixMap.width(), pixMap.height())
         self.setMinimumSize(QSize(50, 50))
         self.setMaximumSize(QSize(1920, 1080))
+        # 固定打开大小
+        self.windowWidth = 1200
+        self.windowHeight = 800
+
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("../images/icons8_photo_gallery_100px.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.setWindowIcon(icon)
@@ -52,9 +55,47 @@ class PopUpDLG(QDialog):
         self.gridLayout.addWidget(self.labelImg, 1, 1, 1, 1)
         self.retranslateUi(self)
         self.retrunVal = None
-        self.xd = 0
-        self.yd = 0
-        self.speed = 55
+        self.Xdistance = 0
+        self.Ydistance = 0
+        self.scrollResizeSpeed = 55
+        self.UiComponents()
+
+    # method for components
+    def UiComponents(self):
+
+        # self.labelImg.setStyleSheet("border:3px solid blue")
+
+        # label width
+        self.imageWidth = self.srcPixMap.width()
+
+        # label height
+        self.imageHeight = self.srcPixMap.height()
+
+        self.imageRatio = self.imageWidth / self.imageHeight
+
+        self.labelFitWindow()
+
+    def setFullScreen(self, val=True):
+        if val:
+            self.showFullScreen()
+        else:
+            self.showNormal()
+            self.labelImg.resize(self.windowWidth, self.windowHeight)
+            self.windowsCenter()
+
+    def labelFitWindow(self):
+        # 谁大就调整谁
+        if self.imageRatio < 0:
+            prevImageWidth = self.width()
+            prevImageHeight = int(prevImageWidth / self.imageRatio)
+        else:
+            prevImageHeight = self.height()
+            prevImageWidth = (prevImageHeight * self.imageRatio)
+
+        self.labelImg.setFixedWidth(prevImageWidth)
+        self.labelImg.setFixedHeight(prevImageHeight)
+
+        self.labelImg.setPixmap(self.srcPixMap.scaled(prevImageWidth, prevImageHeight))
 
     def keyPressEvent(self, ev):
         print(ev)
@@ -64,41 +105,53 @@ class PopUpDLG(QDialog):
             QDialog.keyPressEvent(self, ev)
 
     def wheelEvent(self, event):
-        # if event.delta() > 0: # Roller up, PyQt4
-        # This function has been deprecated, use pixelDelta() or angleDelta() instead.
         angle = event.angleDelta() / 8  # Returns the QPoint object, the value of the wheel, in 1/8 degrees
         angleX = angle.x()  # The distance rolled horizontally (not used here)
         angleY = angle.y()  # The distance that is rolled vertically
 
         self.labelImg.setScaledContents(True)
-        w = self.labelImg.width()
-        h = self.labelImg.height()
+        originalWidth = self.labelImg.width()
+        originalHeight = self.labelImg.height()
 
         if angleY > 0:
-            w += self.speed
-            h += self.speed
+            newWidth = originalWidth + self.scrollResizeSpeed
+            newHeight = int(newWidth / self.imageRatio)
             # self.labelImg.setMinimumSize(self.w, self.h)
 
         else:  # roll down
-            w -= self.speed
-            h -= self.speed
+            newWidth = originalWidth - self.scrollResizeSpeed
+            newHeight = int(newWidth / self.imageRatio)
             # self.labelImg.setMaximumSize(self.w, self.h)
 
-        x1 = event.x() + self.xd
-        y1 = event.y() + self.yd
-        self.labelImg.setPixmap(self.srcPixMap)
-        # self.labelImg.move(int(x1 + self.xd - w1/2), int(y1 + self.yd - h1/2))
+        distanceX = originalWidth - newWidth
+        distanceY = originalHeight - newHeight
 
-        self.labelImg.setFixedWidth(w)
-        self.labelImg.setFixedHeight(h)
-        self.labelImg.move(1000, 1000)
+        originalX = self.labelImg.x()
+        originalY = self.labelImg.y()
+
+        self.labelImg.setFixedWidth(newWidth)
+        self.labelImg.setFixedHeight(newHeight)
+        self.currentWidth = newWidth
+        self.currentHeight = newHeight
+
+        self.labelImg.move(originalX + int(distanceX / 2), originalY + int(distanceY / 2))
+
+        # self.labelImg.setGeometry(self.labelImg.x(), self.labelImg.y(), newWidth, newHeight)
+        self.labelImg.setPixmap(self.srcPixMap)
 
     def mouseDoubleClickEvent(self, a0: QtGui.QMouseEvent):
-        if not self.isFullScreen():
-            self.showFullScreen()
-            # self.labelImg.setScaledContents(True)
-            self.labelImg.setPixmap(self.srcPixMap.scaled(2000, 2000, Qt.KeepAspectRatio))
-        # else:
+        if self.isFullScreen():
+            self.setFullScreen(False)
+        else:
+            self.setFullScreen(True)
+        self.labelFitWindow()
+
+    def windowsCenter(self):
+        sc = QDesktopWidget().screenGeometry()
+        # make window center
+        self.setGeometry(sc.width() / 2 - self.windowWidth / 2, (sc.height() / 2 - self.windowHeight / 2),
+                         self.windowWidth,
+                         self.windowHeight)
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
@@ -106,8 +159,8 @@ class PopUpDLG(QDialog):
             srcY = self.labelImg.y()
             x = event.x()
             y = event.y()
-            self.xd = srcX - x
-            self.yd = srcY - y
+            self.Xdistance = srcX - x
+            self.Ydistance = srcY - y
 
         if event.buttons() == QtCore.Qt.RightButton:  # left button pressed
             self.close()
@@ -116,10 +169,7 @@ class PopUpDLG(QDialog):
         x = event.x()
         y = event.y()
         print(x, y)
-        # if x > 0 and y > 0:
-        # x -= self.labelImg.width() / 2
-        # y -= self.labelImg.height() / 2
-        self.labelImg.move(x + self.xd, y + self.yd)
+        self.labelImg.move(x + self.Xdistance, y + self.Ydistance)
 
     def retranslateUi(self, Dialog):
         _translate = QCoreApplication.translate
@@ -163,6 +213,7 @@ class MyWindow(QtWidgets.QWidget):
         self.image = QImage()  # declare new img
         if self.image.load("../faces/7.jpeg"):  # if the image is loaded, then
             self.imgLabel.setPixmap(QPixmap.fromImage(self.image.scaled(500, 500)))  # Display image
+            # self.imgLabel.setPixmap(QPixmap.fromImage(self.image))  # Display image
 
         self.gridLayout = QtWidgets.QGridLayout(self)  # Layout settings
         self.gridLayout.addWidget(self.imgLabel, 0, 0, 1,

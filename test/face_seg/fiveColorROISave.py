@@ -10,8 +10,8 @@ whiteImg = cv2.imread("../../four_color_face_sample/white.png")
 yellowImg = cv2.imread("../../four_color_face_sample/yellow.png")
 predict1Img = cv2.imread("../../faces/7.jpeg")
 predict2Img = cv2.imread("../../faces/5.JPG")
-predict3ImgWhite= cv2.imread("../../faces/white.jpg")
-predict4ImgDark = cv2.imread("../../faces/dark.jpg")
+predict3ImgWhite = cv2.imread("../../faces/white.jpg")
+predict4ImgDark = cv2.imread("../../faces/dark.jpeg")
 
 
 def cs(img, title=None):
@@ -34,16 +34,18 @@ def segROIAndSave(name, img):
 
     rois = faceEntity.landMarkROIDict
 
-    for roi in rois:
+    for (name, roi) in rois.items():
         cv2.imwrite(roiPATH + "\\" + roi.roiName + ".jpg", roi.img)
         cv2.imwrite(roiPATH + "\\" + roi.roiName + "_trim.jpg", roi.imgOnlySkin)
 
 
-segROIAndSave('black', blackImg)
-segROIAndSave('chi', chiImg)
-segROIAndSave('white', whiteImg)
-segROIAndSave('yellow', yellowImg)
-segROIAndSave('predict1', predict1Img)
-segROIAndSave('predict2', predict2Img)
-segROIAndSave('predict3_white', predict3ImgWhite)
-segROIAndSave('predict4_dark', predict4ImgDark)
+# segROIAndSave('black', blackImg)
+# segROIAndSave('chi', chiImg)
+# segROIAndSave('white', whiteImg)
+# segROIAndSave('yellow', yellowImg)
+# segROIAndSave('predict1', predict1Img)
+# segROIAndSave('predict2', predict2Img)
+# segROIAndSave('predict3_white', predict3ImgWhite)
+# segROIAndSave('predict4_dark', predict4ImgDark)
+segROIAndSave('predict_dark', predict4ImgDark)
+segROIAndSave('predict_white', predict3ImgWhite)

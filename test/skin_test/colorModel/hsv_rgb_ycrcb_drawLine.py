@@ -1,4 +1,6 @@
+# https://medium.com/swlh/human-skin-color-classification-using-the-threshold-classifier-rgb-ycbcr-hsv-python-code-d34d51febdf8
 # https://raw.githubusercontent.com/Harmouch101/Face-Recogntion-Detection/master/skin_seg.py
+# https://github.com/Harmouch101/Face-Recogntion-Detection/
 
 """
 the following script implements the "RGB-H-CbCr Skin Colour Model for Human Face Detection"
@@ -154,7 +156,7 @@ class Skin_Detect():
             ax2.set_xlabel('pixel intensity')
             ax2.xaxis.set_label_coords(0.5, -0.025)
             ax2.set_ylabel('number of pixels')
-            ax2.hist_rgb(Y_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
+            ax2.hist(Y_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
             # Cb components
             ax3 = fig2.add_subplot(3, 1, 2)
             ax3.set_title('Distribution of Cb')
@@ -162,7 +164,7 @@ class Skin_Detect():
             ax3.set_xlabel('pixel intensity')
             ax3.xaxis.set_label_coords(0.5, -0.025)
             ax3.set_ylabel('number of pixels')
-            ax3.hist_rgb(Cb_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
+            ax3.hist(Cb_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
             # Cr components
             ax4 = fig2.add_subplot(3, 1, 3)
             ax4.set_title('Distribution of Cr')
@@ -170,7 +172,7 @@ class Skin_Detect():
             ax4.set_xlabel('pixel intensity')
             ax4.xaxis.set_label_coords(0.5, -0.025)
             ax4.set_ylabel('number of pixels')
-            ax4.hist_rgb(Cr_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
+            ax4.hist(Cr_Frame.ravel(), bins=256, range=(0, 256), fc='b', ec='b')
             # show the effect of the bounding rules of Cr-Cb
             # black and white image after the mask
             img_bw = YCrCb_Rule.astype(np.uint8)
@@ -270,12 +272,18 @@ def testIMG():
     img = imutils.resize(img, width=1000)
     img = np.array(img, dtype=np.uint8)
     test = Skin_Detect()
+
     YCrCb_Frames = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-    HSV_Frames = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # test.Rule_A(img, True)
-    # test.Rule_B(YCrCb_Frames, True)
+    mask = test.Rule_B(YCrCb_Frames)
+    skin_ = np.logical_and.reduce([mask])
+    skin_bw = skin_.astype(np.uint8)
+    skin_bw *= 255
+    seg = cv2.bitwise_and(img, img, mask=skin_bw)
+    # plot as a Grayscale image
+    cv2.imshow("Extracted Skin", seg)
+
     # test.Rule_C(HSV_Frames, True)
-    test.RGB_H_CbCr(img, True)
+    # test.RGB_H_CbCr(img, True)
     plt.show()
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -285,22 +293,46 @@ def testIMG():
     """
 
 
+def maskit(img, mask):
+    skin_ = np.logical_and.reduce([mask])
+    skin_bw = skin_.astype(np.uint8)
+    skin_bw *= 255
+    seg = cv2.bitwise_and(img, img, mask=skin_bw)
+    return seg
+
+
+test = Skin_Detect()
+# original_img = cv2.imread("faces/white.jpg")
+image = cv2.imread("../../../faces/white.jpg")
+test.Rule_B(cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb), True)
+plt.show()
+
+
 def testCamera():
-    test = Skin_Detect()
     while videoCapture.isOpened():
         # image = cv2.imread("../..")
         flag, frame = videoCapture.read()
         if not flag:
             break
 
-        Frame_ = frame
-        skin_ = test.Rule_B(frame, False)
-        skin_bw = skin_.astype(np.uint8)
-        skin_bw *= 255
-        seg = cv2.bitwise_and(Frame_, Frame_, mask=skin_bw)
+        frame = imutils.resize(frame, width=800)
 
-        img = imutils.resize(seg, width=800)
-        cv2.imshow('melt', img)
+        seg_rgb_h_cbcr = maskit(frame, test.RGB_H_CbCr(frame, False))
+        seg_rgb = maskit(frame, test.Rule_A(frame, False))
+
+
+        img_ycbcr = cv2.cvtColor(frame, cv2.COLOR_BGR2YCrCb)
+        # img_ycbcr = frame
+        seg_ycbcr = maskit(frame, test.Rule_B(img_ycbcr, False))
+
+        img_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        # img_hsv = frame
+        seg_hsv = maskit(frame, test.Rule_C(img_hsv, False))
+
+        cv2.imshow('rgb_h-cbcr', seg_rgb_h_cbcr)
+        cv2.imshow('rgb', seg_rgb)
+        cv2.imshow('ycbcr', seg_ycbcr)
+        cv2.imshow('hsv', seg_hsv)
         # Hit 'q' on the keyboard to quit!
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -308,7 +340,7 @@ def testCamera():
     videoCapture.release()
     cv2.destroyAllWindows()
 
-
 videoCapture = cv2.VideoCapture(1)
-if __name__ == "__main__":
-    testCamera()
+# if __name__ == "__main__":
+    # testCamera()
+    # testIMG()

@@ -1,18 +1,24 @@
 import threading
 import time
-from utils.ImageUtils import getcvImgFromFigure, keepSameShape, COLOR_SAMPLE_CN_NAME_BY_KEY, KEY_SAMPLE_YELLOW,KEY_SAMPLE_BLACK,KEY_SAMPLE_WHITE,KEY_SAMPLE_RED
+from utils.ImageUtils import getcvImgFromFigure, keepSameShape, COLOR_SAMPLE_CN_NAME_BY_KEY, KEY_SAMPLE_YELLOW, \
+    KEY_SAMPLE_BLACK, KEY_SAMPLE_WHITE, KEY_SAMPLE_RED
 from core.const_var import FACIAL_LANDMARKS_NAME_DICT
 
 import cv2
 
 # 官方地址 https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html
-from utils.ColorSpaceTransform import *
+# 颜色空间的有关问题：http://poynton.ca/notes/colour_and_gamma/ColorFAQ.html
+from utils.SkinTrimUtlis import *
 from core.const_var import COLORDICT
 
 COLOR_MODE_RGB = 0
 COLOR_MODE_HSV = 1
 COLOR_MODE_Lab = 2
 COLOR_MODE_YCrCb = 3
+
+
+class ColorModeNotAllowException(Exception):
+    pass
 
 
 class SkinUtils:
@@ -24,7 +30,12 @@ class SkinUtils:
         :param img:
         :return:
         """
-        return rgb_hsv_ycbcr(img)
+        return SkinTrimUtils.rgb_hsv_ycbcr(img)
+        # return SkinTrimUtils.YCrCb(img)
+
+    @staticmethod
+    def showScatter(img):
+        pass
 
     @staticmethod
     def show_histogram(hist, title, color, label=['a', 'b', 'c']):
@@ -58,13 +69,41 @@ class SkinUtils:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
             SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "HSV", ('b', 'g', 'r'), ['H', 'S', 'V'])
         elif colormode == COLOR_MODE_Lab:
-
             img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
             SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "Lab", ('b', 'g', 'r'), ['L', 'a', 'b'])
 
         elif colormode == COLOR_MODE_YCrCb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
             SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "YCrCb", ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'])
+        else:
+            pass
+        plt.legend()
+        return getcvImgFromFigure(fig)
+
+    @staticmethod
+    def skinScatter(fig, img=None, colormode=COLOR_MODE_HSV):
+        """
+        绘制散点图
+        :param img: 接受一个BGR模式的图片
+        :param colormode:  选择绘制什么散点图
+        :return:
+        """
+        # fig = plt.figure(figsize=(12, 8))  # 画布大小
+        img = SkinUtils.trimSkin(img)
+        if colormode == COLOR_MODE_RGB:
+            # SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "RGB", ('b', 'g', 'r'), ['r', 'g', 'b'])
+            raise ColorModeNotAllowException()
+        elif colormode == COLOR_MODE_HSV:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            # SkinUtils.showScatter(img, "HSV", ('b', 'g', 'r'), ['H', 'S', 'V'])
+        elif colormode == COLOR_MODE_Lab:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
+            # SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "Lab", ('b', 'g', 'r'), ['L', 'a', 'b'])
+            pass
+        elif colormode == COLOR_MODE_YCrCb:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
+            # SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "YCrCb", ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'])
+            pass
         else:
             pass
         plt.legend()
@@ -107,34 +146,6 @@ class SkinUtils:
         # distance = ((pa - sa) ** 2 + (pb - sb) ** 2) ** 0.5
         distance = ((pr - sr) ** 2 + (pg - sg) ** 2 + (pb - sb) ** 2)
         return distance
-
-    # # img_predict_roi_ting = cv2.resize(img_predict_roi_ting, img_sample_roi_ting.shape[::-1][1:3])
-    # @staticmethod
-    # def getDistanceByRGB(predict, sample):
-    #     """
-    #     去掉黑色像素，这是被肤色检测处理过的像素
-    #     :param predict:
-    #     :param sample:
-    #     :return:
-    #     """
-    #     predict, sample = keepSameShape(predict,sample)
-    #
-    #     x = predict.shape[0]
-    #     y = predict.shape[1]
-    #     dist_byloop = []
-    #     for i in range(x):
-    #         for j in range(y):
-    #             # 纯黑色不检测，因为这是被肤色检测处理过的像素
-    #             if (predict[i][j] == (0, 0, 0)).all() or (sample[i][j] == (0, 0, 0)).all():
-    #                 continue
-    #
-    #             A = predict[i][j]
-    #             B = sample[i][j]
-    #             # np.linalg.norm(A - B) 等同于
-    #             # np.sqrt(np.sum((A[0] - B[0])**2 + (A[1] - B[1])**2 +(A[2] - B[2])**2))
-    #             dist_byloop.append(np.linalg.norm(A - B))
-    #             # sum += np.sqrt(np.sum(np.square(predict[i][j] - sample[i][j])))
-    #     return np.mean(dist_byloop)
 
     @staticmethod
     def getDistanceByLab(predict, sample):
@@ -255,13 +266,20 @@ class SkinUtils:
     @staticmethod
     def getResulstByColor(rois, colors):
         pass
+
     @staticmethod
     def getResultByOneColor(roiKey, color):
         # // TODO 更多的咨询
         return FACIAL_LANDMARKS_NAME_DICT[roiKey] + "颜色偏向于:" + COLOR_SAMPLE_CN_NAME_BY_KEY[color]
 
+    @staticmethod
+    def trimSkinRealTime(img, scale):
+        return
+
+
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
 
 def _color_space_show():
     # fig1 = Figure()

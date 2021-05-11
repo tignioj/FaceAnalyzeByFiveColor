@@ -64,11 +64,12 @@ class BackendThread:
     def faceDetectInBackground(paramMap):
         LogUtils.log("BackendThread", "正在进行人脸检测...", progress=5)
         img = paramMap['image']
-        img = imutils.resize(img, 800, 800)
+        # img = imutils.resize(img, 800, 800)
         detectedFaces = faceDetect(img, 1, paramMap['name'], paramMap['gender'])
         LogUtils.log("BackendThread", "检测到..." + str(len(detectedFaces)) + "张人脸, 准备生成报告...", progress=50)
         reports = ReportService.generateReports(detectedFaces)
         LogUtils.log("BackendThread", '共生成' + str(len(reports)) + "份报告", progress=100)
+        LogUtils.disableProgressSignal()
         return {'reports': reports}
 
     # 生成报告，有IO操作

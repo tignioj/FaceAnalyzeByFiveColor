@@ -338,6 +338,6 @@ def testCamera():
 
 
 videoCapture = cv2.VideoCapture(1)
-if __name__ == "__main__":
-    testCamera()
+# if __name__ == "__main__":
+    # testCamera()
     # testIMG()

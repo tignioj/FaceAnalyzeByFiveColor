@@ -30,6 +30,8 @@ def hsv(image):
 
 def YCrCb(image):
     """
+    Comparison between YCbCr Color Space and CIELab
+    Color Space for Skin Color Segmentation
     编码的非线性RGB信号，通常用于视频编码和图像压缩工作。
     构造为RGB值和两个色差值Cr和Cb的加权和，这两个色差值是通过从RGB红色和蓝色分量中减去亮度来形成的
     Y为16至235，Cb和Cr为16至240
