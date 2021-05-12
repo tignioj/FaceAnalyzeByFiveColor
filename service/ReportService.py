@@ -79,12 +79,12 @@ class ReportService:
         fig = plt.figure()
         print('Run task %s (%s)...' % (roiName, os.getpid()))
         start = time.time()
-        if colorMode == COLOR_MODE_RGB:
-            draw = (SkinUtils.skinHistogram(fig, img, colorMode))
-        else:
-            draw = (SkinUtils.skinScatter(fig, img, colorMode, roiName, sampleDict))
+        sampleDict = ImgUtils.getSampleDict()
+        draw = (SkinUtils.skinHistogram(fig, img, colorMode, roiName, sampleDict))
+        # draw = (SkinUtils.skinScatter(fig, img, colorMode, roiName, sampleDict))
         end = time.time()
         print('Task %s runs %0.2f seconds.' % (roiName, (end - start)))
+        fig.clear()
         return draw
 
     @staticmethod
@@ -117,12 +117,10 @@ class ReportService:
             p = Pool(len(items))
             sampleDict = ImgUtils.getSampleDict()
             for (name, roi) in items:
-
                 nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
                 LogUtils.log("ReportService", "开启线程为" + nameCN + "绘图中... ")
                 result[name] = p.apply_async(ReportService.thread_roi_process,
                                              args=(name, roi, sampleDict, currentProgress))
-
 
                 # p.apply_async(ReportService.long_time_task,     args=(data, "plot" + str(i),))
 
@@ -159,6 +157,7 @@ class ReportService:
         nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
         LogUtils.log("ReportService", "正在绘制" + nameCN + "的颜色空间分布曲线")
         nameCN = FACIAL_LANDMARKS_NAME_DICT[roi.roiName]
+
         rgbDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_RGB, sampleDict)
 
         hsvDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_HSV, sampleDict)

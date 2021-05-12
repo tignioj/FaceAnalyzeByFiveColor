@@ -98,7 +98,6 @@ class PopUpDLG(QDialog):
         self.labelImg.setPixmap(self.srcPixMap.scaled(prevImageWidth, prevImageHeight))
 
     def keyPressEvent(self, ev):
-        print(ev)
         if ev.key() == Qt.Key_Escape:
             self.close()
         else:
@@ -168,7 +167,6 @@ class PopUpDLG(QDialog):
     def mouseMoveEvent(self, event):
         x = event.x()
         y = event.y()
-        print(x, y)
         self.labelImg.move(x + self.Xdistance, y + self.Ydistance)
 
     def retranslateUi(self, Dialog):

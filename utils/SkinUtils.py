@@ -30,6 +30,12 @@ class ScatterException(Exception):
         self.message = message
 
 
+class HistogramException(Exception):
+    def __init__(self, expression=None, message=None):
+        self.expression = expression
+        self.message = message
+
+
 class SkinUtils:
 
     @staticmethod
@@ -44,6 +50,12 @@ class SkinUtils:
 
     @staticmethod
     def getFourColorSampleByROIName(roiName, sampleDict):
+        """
+        根据ROI名称返回四个颜色的样本
+        :param roiName:
+        :param sampleDict:
+        :return:
+        """
         d = sampleDict
 
         red = d[ImgUtils.KEY_SAMPLE_RED]
@@ -59,43 +71,143 @@ class SkinUtils:
         return redSample, yellowSample, blackSample, whiteSample
 
     @staticmethod
-    def showScatter(a, b, labelX, labelY, roiName, sampleDict):
-        # draw predict
-        plt.scatter(a, b, alpha=0.5, c='green', label=roiName)
-        # draw sample
+    def getFourColorSampleByROINameAndColorSpace(roiName, sampleDict, colorSpace):
+        """
+        获取对应空间的ROI
+        :param roiName:
+        :param sampleDict:
+        :param colorSpace:
+        :return:
+        """
         redSample, yellowSample, blackSample, whiteSample = SkinUtils.getFourColorSampleByROIName(roiName, sampleDict)
 
+        if colorSpace == COLOR_MODE_YCrCb:
+            mode = cv2.COLOR_BGR2YCrCb
+        elif colorSpace == COLOR_MODE_HSV:
+            mode = cv2.COLOR_BGR2HSV
+        elif colorSpace == COLOR_MODE_Lab:
+            mode = cv2.COLOR_BGR2Lab
+        elif colorSpace == COLOR_MODE_RGB:
+            mode = cv2.COLOR_BGR2RGB
+        else:
+            mode = None
+
+        if mode is not None:
+            return cv2.cvtColor(redSample, mode), \
+                   cv2.cvtColor(yellowSample, mode), \
+                   cv2.cvtColor(blackSample, mode), \
+                   cv2.cvtColor(whiteSample, mode)
+        else:
+            return redSample, yellowSample, blackSample, whiteSample
+
+    @staticmethod
+    def showScatter(img, channelA, channelB, labelX, labelY, roiName, sampleDict, colorSpace, xLim=None, yLim=None):
+        # draw predict
+        plt.scatter(img[:, :, channelA].flatten(), img[:, :, channelB].flatten(), alpha=0.5, c='green', label=roiName)
+        # draw sample
+        redSample, yellowSample, blackSample, whiteSample = SkinUtils.getFourColorSampleByROINameAndColorSpace(roiName,
+                                                                                                               sampleDict,
+                                                                                                               colorSpace)
+
         def drawSample(sample, color=None, label=None):
-            # sample = cv2.resize(sample, (50,50))
-            plt.scatter(sample[:, :, 0].flatten(), sample[:, :, 1].flatten(), alpha=0.5, c=color, label=label)
+            plt.scatter(sample[:, :, channelA].flatten(), sample[:, :, channelB].flatten(), alpha=0.5, c=color,
+                        label=label)
 
         drawSample(redSample, "red", "red")
         drawSample(yellowSample, "yellow", "yellow")
         drawSample(whiteSample, "lightBlue", "white")
         drawSample(blackSample, "purple", "black")
 
+        if xLim is not None:
+            plt.xlim(xLim)
+
+        if yLim is not None:
+            plt.ylim(yLim)
+
         plt.xlabel(labelX)
         plt.ylabel(labelY)
 
     @staticmethod
-    def show_histogram(hist, title, color, label=['a', 'b', 'c']):
-        # plt.title(title)
-        # 定位图片
-        # plt.subplot(3, 2, pos)
-        for h, c, l in zip(hist, color, label):  # color: ('b', 'g', 'r'), zip:连接
-            plt.plot(h, color=c, label=l)
-            # plt.bar([i for i in range(0, 256)], h, color=c, label=l)
+    def show_histogram(img, title, channelA, channelB, color=['b', 'g', 'r'], label=['a', 'b', 'c'], roiName=None,
+                       sampleDict=None, colorspace=COLOR_MODE_RGB):
+        a, b, c = cv2.split(img)
+
+        ax = plt.subplot2grid((3, 3), (0, 0), colspan=2, rowspan=1)
+        abins = a.max() - a.min()
+        bbins = b.max() - b.min()
+        cbins = c.max() - c.min()
+
+        arange = (a.min(), a.max())
+        brange = (b.min(), b.max())
+        crange = (c.min(), c.max())
+
+        ax.hist(a.ravel(), bins=abins, range=arange, alpha=.7, label=label[0], color=color[0])
+        ax.hist(b.ravel(), bins=bbins, range=brange, alpha=.7, label=label[1], color=color[1])
+        ax.hist(c.ravel(), bins=cbins, range=crange, alpha=.7, label=label[2], color=color[2])
+        ax.set_title(title)
+        ax.legend()
+
+        ax1 = plt.subplot2grid((3, 3), (0, 2), colspan=1, rowspan=1)
+        ax1.hist(a.ravel(), bins=abins, range=arange, alpha=.7, label=label[0], color=color[0])
+        ax1.set_xlabel(label[0])
+
+        ax2 = plt.subplot2grid((3, 3), (1, 2), colspan=1, rowspan=1)
+        ax2.hist(b.ravel(), bins=bbins, range=brange, alpha=.7, label=label[1], color=color[1])
+        ax2.set_xlabel(label[1])
+
+        ax3 = plt.subplot2grid((3, 3), (2, 2), colspan=1, rowspan=1)
+        ax3.hist(c.ravel(), bins=cbins, range=crange, alpha=.7, label=label[2], color=color[2])
+        ax3.set_xlabel(label[2])
+
+        def sp(img):
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
+            return img[:, :, channelA], img[:, :, channelB]
+
+        def scatterSample(ax):
+            a, b = sp(redSample)
+            ax.scatter(a, b, alpha=0.5, c='red', label="red")
+            a, b = sp(blackSample)
+            ax.scatter(a, b, alpha=0.5, c='purple', label="black")
+            a, b = sp(yellowSample)
+            ax.scatter(a, b, alpha=0.5, c='yellow', label="yellow")
+            a, b = sp(whiteSample)
+            ax.scatter(a, b, alpha=0.5, c='lightblue', label="white")
+            a, b = sp(img)
+            ax.scatter(a, b, alpha=0.5, c='green', label=roiName, marker='^')
+            ax.legend()
+
+        def scatterSample3D(ax):
+            a, b, c = cv2.split(redSample)
+            ax.scatter(a, b, c, alpha=0.5, c='red', label="red")
+            a, b, c = cv2.split(blackSample)
+            ax.scatter(a, b, c, alpha=0.5, c='purple', label="black")
+            a, b, c = cv2.split(yellowSample)
+            ax.scatter(a, b, c, alpha=0.5, c='yellow', label="yellow")
+            a, b, c = cv2.split(whiteSample)
+            ax.scatter(a, b, c, alpha=0.5, c='lightblue', label="white")
+            a, b, c = cv2.split(img)
+            ax.scatter(a, b, c, alpha=0.5, c='green', label=roiName, marker='^')
+            ax.legend()
+
+        redSample, yellowSample, blackSample, whiteSample = \
+            SkinUtils.getFourColorSampleByROINameAndColorSpace(roiName, sampleDict, colorspace)
+
+        if colorspace == COLOR_MODE_RGB:
+            ax4 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2, projection='3d')
+            scatterSample3D(ax4)
+            ax4.set_xlabel("B")
+            ax4.set_ylabel("G")
+            ax4.set_zlabel("R")
+        else:
+            ax4 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
+            scatterSample(ax4)
+            ax4.set_xlabel(label[channelA])
+            ax4.set_ylabel(label[channelB])
+
+        plt.show()
 
     @staticmethod
-    def _cal_color_his(image, range=[0, 256]):
-        hist = []
-        hist.append(cv2.calcHist([image], [0], None, [256], range))
-        hist.append(cv2.calcHist([image], [1], None, [256], range))
-        hist.append(cv2.calcHist([image], [2], None, [256], range))
-        return hist
-
-    @staticmethod
-    def skinHistogram(fig, img=None, colormode=COLOR_MODE_RGB):
+    def skinHistogram(fig, img=None, colormode=COLOR_MODE_RGB, roiName=None, sampleDict=None):
         """
         :param img: 接受一个BGR模式的图片
         :param colormode:  选择绘制什么直方图
@@ -104,25 +216,22 @@ class SkinUtils:
         # fig = plt.figure(figsize=(12, 8))  # 画布大小
         img = SkinUtils.trimSkin(img)
         if colormode == COLOR_MODE_RGB:
-            SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "RGB", ('b', 'g', 'r'), ['r', 'g', 'b'])
+            SkinUtils.show_histogram(img, "RGB", 0, 1, ('b', 'g', 'r'), ['b', 'g', 'r'], roiName, sampleDict, colormode)
         elif colormode == COLOR_MODE_HSV:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "HSV", ('b', 'g', 'r'), ['H', 'S', 'V'])
+            SkinUtils.show_histogram(img, "HSV", 0, 1, ('b', 'g', 'r'), ['H', 'S', 'V'], roiName, sampleDict, colormode)
         elif colormode == COLOR_MODE_Lab:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
-            SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "Lab", ('b', 'g', 'r'), ['L', 'a', 'b'])
-
+            SkinUtils.show_histogram(img, "Lab", 1, 2, ('b', 'g', 'r'), ['L', 'a', 'b'], roiName, sampleDict, colormode)
         elif colormode == COLOR_MODE_YCrCb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-            SkinUtils.show_histogram(SkinUtils._cal_color_his(img), "YCrCb", ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'])
+            SkinUtils.show_histogram(img, "YCrCb", 1, 2, ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'], roiName, sampleDict,
+                                     colormode)
         else:
-            pass
-        plt.legend()
+            raise HistogramException("SkinUtils, 没有指定颜色空间！")
+        # plt.legend()
+        # fig.tight_layout()
         return ImgUtils.getcvImgFromFigure(fig)
-
-
-
-
 
     @staticmethod
     def skinScatter(fig, img=None, colormode=COLOR_MODE_HSV, roiName=None, sampleDict=None):
@@ -140,19 +249,16 @@ class SkinUtils:
             raise ColorModeNotAllowException("不支持RGB二维散点图")
         elif colormode == COLOR_MODE_HSV:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            h, s, v = cv2.split(img)
-            SkinUtils.showScatter(h.flatten(), s.flatten(), "H", "S", roiName, sampleDict)
+            SkinUtils.showScatter(img, 0, 1, "H", "S", roiName, sampleDict, colormode)
         elif colormode == COLOR_MODE_Lab:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
-            L, a, b = cv2.split(img)
-            SkinUtils.showScatter(a.flatten(), b.flatten(), "a", "b", roiName, sampleDict)
+            SkinUtils.showScatter(img, 1, 2, "a", "b", roiName, sampleDict, colormode)
         elif colormode == COLOR_MODE_YCrCb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-            Y, Cr, Cb = cv2.split(img)
-            SkinUtils.showScatter(Cr.flatten(), Cb.flatten(), "Cr", "Cb", roiName, sampleDict)
+            SkinUtils.showScatter(img, 1, 2, "Cr", "Cb", roiName, sampleDict, colormode)
         else:
             pass
-        plt.legend()
+        # plt.legend()
         return ImgUtils.getcvImgFromFigure(fig)
 
     @staticmethod
@@ -326,6 +432,7 @@ class SkinUtils:
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
+
 #
 # def _color_space_show():
 #     # fig1 = Figure()
@@ -369,5 +476,51 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 #
 
 # videoCapture = cv2.VideoCapture(1)
-# if __name__ == '__main__':
-#     _color_space_show()
+
+def _testHist():
+    img = cv2.imread("../result/predict_white/ke.jpg")
+    sampleDict = ImgUtils.getSampleDict()
+    roiName = KEY_ting
+    fig = plt.figure()
+    result0 = SkinUtils.skinHistogram(fig, img, COLOR_MODE_RGB, roiName, sampleDict)
+
+    fig = plt.figure()
+    result1 = SkinUtils.skinHistogram(fig, img, COLOR_MODE_HSV, roiName, sampleDict)
+
+    fig = plt.figure()
+    result2 = SkinUtils.skinHistogram(fig, img, COLOR_MODE_Lab, roiName, sampleDict)
+
+    fig = plt.figure()
+    result3 = SkinUtils.skinHistogram(fig, img, COLOR_MODE_YCrCb, roiName, sampleDict)
+
+    cv2.imshow("RGB", result0)
+    cv2.imshow("HSV", result1)
+    cv2.imshow("Lab", result2)
+    cv2.imshow("YCrCb", result3)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+def _testScatter():
+    img = cv2.imread("../result/predict_white/ke.jpg")
+    sampleDict = ImgUtils.getSampleDict()
+    fig = plt.figure()
+    # result1 = SkinUtils.skinScatter(fig, img, COLOR_MODE_HSV, KEY_ting, sampleDict)
+
+    result1 = SkinUtils.skinScatter(fig, img, COLOR_MODE_HSV, KEY_ting, sampleDict)
+
+    fig = plt.figure()
+    result2 = SkinUtils.skinScatter(fig, img, COLOR_MODE_Lab, KEY_ting, sampleDict)
+
+    fig = plt.figure()
+    result3 = SkinUtils.skinScatter(fig, img, COLOR_MODE_YCrCb, KEY_ting, sampleDict)
+    cv2.imshow("HSV", result1)
+    cv2.imshow("Lab", result2)
+    cv2.imshow("YCrCb", result3)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+if __name__ == '__main__':
+    # _color_space_show()
+    _testHist()

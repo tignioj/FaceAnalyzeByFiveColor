@@ -52,7 +52,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.cameraTimer = QtCore.QTimer()
 
         # 摄像头
-        self.CAM_NUM = 1
+        self.CAM_NUM = 0
         self.labelImageState = MainGUI.__IMAGE_LABEL_STATE_NONE  # 0表示无图像，1表示开启摄像头读取图像，2表示打开图像文件
 
         # 信息区
