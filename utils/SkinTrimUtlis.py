@@ -56,7 +56,7 @@ class SkinTrimUtils:
         :return:
         """
         skinMask = SkinTrimUtils._sd.RGB_H_CbCr(image, False)
-        # skinMask = SkinTrimUtils._getMask(skinMask)
+        skinMask = SkinTrimUtils._getMask(skinMask)
         skin = cv2.bitwise_and(image, image, mask=skinMask)
         return skin
 

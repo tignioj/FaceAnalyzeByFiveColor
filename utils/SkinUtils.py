@@ -9,6 +9,7 @@ import cv2
 
 # 官方地址 https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html
 # 颜色空间的有关问题：http://poynton.ca/notes/colour_and_gamma/ColorFAQ.html
+from utils.LogUtils import LogUtils
 from utils.SkinTrimUtlis import *
 from core.const_var import COLORDICT
 
@@ -128,14 +129,45 @@ class SkinUtils:
         plt.ylabel(labelY)
 
     @staticmethod
-    def show_histogram(img, title, channelA, channelB, color=['b', 'g', 'r'], label=['a', 'b', 'c'], roiName=None,
+    def show_histogram(img, title, channelA, channelB, luminanceChannel, color=['b', 'g', 'r'], label=['a', 'b', 'c'],
+                       roiName=None,
                        sampleDict=None, colorspace=COLOR_MODE_RGB):
-        a, b, c = cv2.split(img)
+        """
+        画出直方图和散点图
+        :param img:  要画图的原数组
+        :param title:  标题
+        :param channelA: 要展示的维度1
+        :param channelB: 要展示的维度2
+        :param luminanceChannel: 亮度通道，用来排除黑点
+        :param color: 三个通道颜色怎么显示
+        :param label: 三个通道在图中显示的标签。
+        :param roiName: ROI的名字
+        :param sampleDict: 样本
+        :param colorspace: 画什么颜色空间的直方图和散点图
+        :return:
+        """
 
+        def sp(img):
+            """
+            分割出亮度通道，并提取出亮度>0的数值
+            :param img:
+            :return:
+            """
+            c = img[:, :, luminanceChannel]
+            a = img[:, :, channelA][c > 0]
+            b = img[:, :, channelB][c > 0]
+            return a, b, c
+
+        a, b, c = sp(img)
         ax = plt.subplot2grid((3, 3), (0, 0), colspan=2, rowspan=1)
-        abins = a.max() - a.min()
-        bbins = b.max() - b.min()
-        cbins = c.max() - c.min()
+        abins = abs(int(a.max() - a.min()))
+        bbins = abs(int(b.max() - b.min()))
+        cbins = abs(int(c.max() - c.min()))
+        if abins < 1: abins = 1
+        if bbins < 1: bbins = 1
+        if cbins < 1: cbins = 1
+        LogUtils.log("SkinUtils-show_histogram",
+                     ",abins=" + str(abins) + ",bbins=" + str(bbins) + ",cbin=" + str(cbins))
 
         arange = (a.min(), a.max())
         brange = (b.min(), b.max())
@@ -159,50 +191,26 @@ class SkinUtils:
         ax3.hist(c.ravel(), bins=cbins, range=crange, alpha=.7, label=label[2], color=color[2])
         ax3.set_xlabel(label[2])
 
-        def sp(img):
-            # img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-            return img[:, :, channelA], img[:, :, channelB]
-
         def scatterSample(ax):
-            a, b = sp(redSample)
+            a, b, c = sp(redSample)
             ax.scatter(a, b, alpha=0.5, c='red', label="red")
-            a, b = sp(blackSample)
+            a, b, c = sp(blackSample)
             ax.scatter(a, b, alpha=0.5, c='purple', label="black")
-            a, b = sp(yellowSample)
+            a, b, c = sp(yellowSample)
             ax.scatter(a, b, alpha=0.5, c='yellow', label="yellow")
-            a, b = sp(whiteSample)
+            a, b, c = sp(whiteSample)
             ax.scatter(a, b, alpha=0.5, c='lightblue', label="white")
-            a, b = sp(img)
-            ax.scatter(a, b, alpha=0.5, c='green', label=roiName, marker='^')
-            ax.legend()
-
-        def scatterSample3D(ax):
-            a, b, c = cv2.split(redSample)
-            ax.scatter(a, b, c, alpha=0.5, c='red', label="red")
-            a, b, c = cv2.split(blackSample)
-            ax.scatter(a, b, c, alpha=0.5, c='purple', label="black")
-            a, b, c = cv2.split(yellowSample)
-            ax.scatter(a, b, c, alpha=0.5, c='yellow', label="yellow")
-            a, b, c = cv2.split(whiteSample)
-            ax.scatter(a, b, c, alpha=0.5, c='lightblue', label="white")
-            a, b, c = cv2.split(img)
-            ax.scatter(a, b, c, alpha=0.5, c='green', label=roiName, marker='^')
+            a, b, c = sp(img)
+            ax.scatter(a, b, alpha=0.3, c='green', label=roiName, marker='^')
             ax.legend()
 
         redSample, yellowSample, blackSample, whiteSample = \
             SkinUtils.getFourColorSampleByROINameAndColorSpace(roiName, sampleDict, colorspace)
 
-        if colorspace == COLOR_MODE_RGB:
-            ax4 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2, projection='3d')
-            scatterSample3D(ax4)
-            ax4.set_xlabel("B")
-            ax4.set_ylabel("G")
-            ax4.set_zlabel("R")
-        else:
-            ax4 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
-            scatterSample(ax4)
-            ax4.set_xlabel(label[channelA])
-            ax4.set_ylabel(label[channelB])
+        ax4 = plt.subplot2grid((3, 3), (1, 0), colspan=2, rowspan=2)
+        scatterSample(ax4)
+        ax4.set_xlabel(label[channelA])
+        ax4.set_ylabel(label[channelB])
 
         plt.show()
 
@@ -214,18 +222,21 @@ class SkinUtils:
         :return:
         """
         # fig = plt.figure(figsize=(12, 8))  # 画布大小
-        img = SkinUtils.trimSkin(img)
+        # img = SkinUtils.trimSkin(img)
         if colormode == COLOR_MODE_RGB:
-            SkinUtils.show_histogram(img, "RGB", 0, 1, ('b', 'g', 'r'), ['b', 'g', 'r'], roiName, sampleDict, colormode)
+            SkinUtils.show_histogram(img, "RGB", 0, 1, 2, ('b', 'g', 'r'), ['b', 'g', 'r'], roiName, sampleDict,
+                                     colormode)
         elif colormode == COLOR_MODE_HSV:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            SkinUtils.show_histogram(img, "HSV", 0, 1, ('b', 'g', 'r'), ['H', 'S', 'V'], roiName, sampleDict, colormode)
+            SkinUtils.show_histogram(img, "HSV", 0, 1, 2, ('b', 'g', 'r'), ['H', 'S', 'V'], roiName, sampleDict,
+                                     colormode)
         elif colormode == COLOR_MODE_Lab:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
-            SkinUtils.show_histogram(img, "Lab", 1, 2, ('b', 'g', 'r'), ['L', 'a', 'b'], roiName, sampleDict, colormode)
+            SkinUtils.show_histogram(img, "Lab", 1, 2, 0, ('b', 'g', 'r'), ['L', 'a', 'b'], roiName, sampleDict,
+                                     colormode)
         elif colormode == COLOR_MODE_YCrCb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-            SkinUtils.show_histogram(img, "YCrCb", 1, 2, ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'], roiName, sampleDict,
+            SkinUtils.show_histogram(img, "YCrCb", 1, 2, 0, ('b', 'g', 'r'), ['Y', 'Cr', 'Cb'], roiName, sampleDict,
                                      colormode)
         else:
             raise HistogramException("SkinUtils, 没有指定颜色空间！")
@@ -279,24 +290,24 @@ class SkinUtils:
                 for v in row:
                     # 排除黑色
                     # if v[0] != 0:
-                    if v[0] != 0 and v[1] != 0 and v[2] != 0:
+                    if not (v[0] == 0 and v[1] == 0 and v[2] == 0):
                         k = k + 1
                         R += v[0]
                         G += v[1]
                         R += v[2]
+            if k == 0:
+                return 0, 0, 0
             # 计算出了LAB的均值
             R0 = int(round(R / k))
             G0 = int(round(G / k))
             B0 = int(round(R / k))
             return R0, G0, B0
 
-        # predict_lab = cv2.cvtColor(predict, cv2.COLOR_BGR)
-        # sample_lab = cv2.cvtColor(sample, cv2.COLOR_BGR2Lab)
         pr, pg, pb = trimBlack(predict)
         sr, sg, sb = trimBlack(sample)
 
         # distance = ((pa - sa) ** 2 + (pb - sb) ** 2) ** 0.5
-        distance = ((pr - sr) ** 2 + (pg - sg) ** 2 + (pb - sb) ** 2)
+        distance = ((pr - sr) ** 2 + (pg - sg) ** 2 + (pb - sb) ** 2) ** 0.5
         return distance
 
     @staticmethod
@@ -307,7 +318,8 @@ class SkinUtils:
         :return:
         """
 
-        def trimBlack(img_lab):
+        def trimBlack(img):
+            img_lab = cv2.cvtColor(img, cv2.COLOR_BGR2Lab)
             k = 0
             L, A, B = 0, 0, 0
             for row in img_lab:
@@ -318,16 +330,16 @@ class SkinUtils:
                         L += v[0]
                         A += v[1]
                         B += v[2]
+            if k == 0:
+                return 0, 0, 0
             # 计算出了LAB的均值
             L0 = int(round(L / k))
             A0 = int(round(A / k))
             B0 = int(round(B / k))
             return L0, A0, B0
 
-        predict_lab = cv2.cvtColor(predict, cv2.COLOR_BGR2Lab)
-        sample_lab = cv2.cvtColor(sample, cv2.COLOR_BGR2Lab)
-        pl, pa, pb = trimBlack(predict_lab)
-        sl, sa, sb = trimBlack(sample_lab)
+        pl, pa, pb = trimBlack(predict)
+        sl, sa, sb = trimBlack(sample)
 
         distance = ((pa - sa) ** 2 + (pb - sb) ** 2) ** 0.5
         # distance = ((pl - sl) ** 2 + (pa - sa) ** 2 + (pb - sb) ** 2)
@@ -342,29 +354,31 @@ class SkinUtils:
         :return:
         """
 
-        def trimBlack(img_hsv):
+        def trimBlack(img):
+            img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
             k = 0
             H, S, V = 0, 0, 0
             for row in img_hsv:
                 for v in row:
                     # 排除黑色
-                    if v[0] != 0:
+                    if v[2] != 0:
                         k = k + 1
-                    H += v[0]
-                    S += v[1]
-                    V += v[2]
+                        H += v[0]
+                        S += v[1]
+                        V += v[2]
+
+            if k == 0:
+                return 0, 0, 0
             # 计算出了LAB的均值
             H0 = int(round(H / k))
             S0 = int(round(S / k))
             V0 = int(round(V / k))
             return H0, S0, V0
 
-        predict_hsv = cv2.cvtColor(predict, cv2.COLOR_BGR2HSV)
-        sample_hsv = cv2.cvtColor(sample, cv2.COLOR_BGR2HSV)
-        ph, ps, pv = trimBlack(predict_hsv)
-        sh, ss, sv = trimBlack(sample_hsv)
+        ph, ps, pv = trimBlack(predict)
+        sh, ss, sv = trimBlack(sample)
         # distance = ((ph - sh) ** 2 + (ps - ss) ** 2 + (pv - sv) ** 2)
-        distance = (ph - sh) ** 2
+        distance = ((ph - sh) ** 2 + (ps - ss) ** 2) ** 0.5
         return distance
 
     @staticmethod
@@ -375,49 +389,30 @@ class SkinUtils:
         :return:
         """
 
-        def trimBlack(img_hsv):
+        def trimBlack(img):
+            img_YCrCb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
             k = 0
             Y, Cr, Cb = 0, 0, 0
-            for row in img_hsv:
+            for row in img_YCrCb:
                 for v in row:
                     # 排除黑色
                     if v[0] != 0:
                         k = k + 1
-                    Y += v[0]
-                    Cr += v[1]
-                    Cb += v[2]
-            # 计算出了LAB的均值
-            H0 = int(round(Y / k))
-            S0 = int(round(Cr / k))
-            V0 = int(round(Cb / k))
-            return H0, S0, V0
+                        Y += v[0]
+                        Cr += v[1]
+                        Cb += v[2]
+            if k == 0:
+                return 0, 0, 0
+            # 计算出了Y, Cr, Cb的均值
+            Y0 = int(round(Y / k))
+            Cr0 = int(round(Cr / k))
+            Cb0 = int(round(Cb / k))
+            return Y0, Cr0, Cb0
 
-        predict_YCrCb = cv2.cvtColor(predict, cv2.COLOR_BGR2YCrCb)
-        sample_YCrCb = cv2.cvtColor(sample, cv2.COLOR_BGR2HSV)
-        pY, pCr, pCb = trimBlack(predict_YCrCb)
-        sY, sCr, sCb = trimBlack(sample_YCrCb)
-        distance = ((pY - sY) ** 2 + (pCr - sCr) ** 2 + (pCb - sCb) ** 2)
+        pY, pCr, pCb = trimBlack(predict)
+        sY, sCr, sCb = trimBlack(sample)
+        distance = ((pCr - sCr) ** 2 + (pCb - sCb) ** 2) ** 0.5
         return distance
-
-    @staticmethod
-    def distance(predict, sample=None):
-        # predict = cv2.imread("../../result/predict1/ting_trim.jpg")
-        # predict = cv2.imread("../../result/predict2/ting_trim.jpg")
-        # predict = cv2.imread("../../result/predict3_white/ting_trim.jpg")
-        # predict = cv2.imread("../../result/chi/ming_tang_trim.jpg")
-        # predict = cv2.imread("../../result/black/ming_tang_trim.jpg")
-        # predict = cv2.imread("../../result/black/ting_trim.jpg")
-        # predict = cv2.imread("../../result/predict4_dark/ting_trim.jpg")
-        predict = cv2.resize(predict, (sample.shape[1], sample.shape[0]))
-        # res = np.hstack([predict, sample])
-        # cv2.imshow(name, res)
-        return SkinUtils.getDistanceByRGB(predict, sample), SkinUtils.getDistanceByLab(predict,
-                                                                                       sample), SkinUtils.getDistanceByHSV(
-            predict, sample)
-
-    @staticmethod
-    def getResulstByColor(rois, colors):
-        pass
 
     @staticmethod
     def getResultByOneColor(roiKey, color):
@@ -480,7 +475,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 def _testHist():
     img = cv2.imread("../result/predict_white/ke.jpg")
     sampleDict = ImgUtils.getSampleDict()
-    roiName = KEY_ting
+    roiName = KEY_ke
     fig = plt.figure()
     result0 = SkinUtils.skinHistogram(fig, img, COLOR_MODE_RGB, roiName, sampleDict)
 

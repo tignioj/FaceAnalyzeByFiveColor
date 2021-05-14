@@ -11,6 +11,8 @@ class DistanceUtils:
         """
         获取单个ROI的四种算法距离
         获取五种算法后的距离数组，以及预测的颜色，返回值数据结构
+        https://en.wikipedia.org/wiki/Color_difference
+
         {
             'lab': [ distance array, color result]
             'ycrcb': [ distance array, color result]

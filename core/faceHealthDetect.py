@@ -32,7 +32,7 @@ class FaceNotFoundException(Exception):
         self.message = message
 
 
-def faceDetect(img, scale,username=None, gender=None):
+def faceDetect(img, scale=1,username=None, gender=None):
     faces = faceDetection.faceDetectByImg(img, scale, username, gender)
     if len(faces) <= 0:
         raise FaceNotFoundException(img, "Face Not found on image.")
@@ -59,9 +59,13 @@ def cvShowImg(img):
 
 
 if __name__ == '__main__':
-    img = cv.imread("../faces/7.jpeg")
+    img = cv.imread("../faces/library.jpg")
     # cvShowImg(img)
-    faceDetect(img)
+    dfs = faceDetect(img,1,"张三", "男")
+    for f in dfs:
+        cvShowImg(f.drawImg)
+
+
 
 # if __name__ == "__main__":
 #     # 输入检测人员信息

@@ -79,7 +79,9 @@ class ReportService:
         fig = plt.figure()
         print('Run task %s (%s)...' % (roiName, os.getpid()))
         start = time.time()
-        sampleDict = ImgUtils.getSampleDict()
+        if sampleDict is None:
+            sampleDict = ImgUtils.getSampleDict()
+
         draw = (SkinUtils.skinHistogram(fig, img, colorMode, roiName, sampleDict))
         # draw = (SkinUtils.skinScatter(fig, img, colorMode, roiName, sampleDict))
         end = time.time()

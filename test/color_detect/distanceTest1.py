@@ -80,6 +80,9 @@ class HistogramTools:
         plt.bar(x1, y1, label=label, width=barwidth)
         plt.legend()
 
+
+
+
     @staticmethod
     def getDistanceByDifferentColorSpace(fig, predict=None, keyName=None, sampleDict=None):
         """
@@ -98,8 +101,7 @@ class HistogramTools:
             sampleDict = ImgUtils.getSampleDict()
 
         black_sample_dict, yellow_sample_dict, red_sample_dict, white_sample_dict = \
-            sampleDict[ImgUtils.KEY_SAMPLE_BLACK], sampleDict[ImgUtils.KEY_SAMPLE_YELLOW], sampleDict[
-                ImgUtils.KEY_SAMPLE_RED], sampleDict[
+            sampleDict[ImgUtils.KEY_SAMPLE_BLACK], sampleDict[ImgUtils.KEY_SAMPLE_YELLOW], sampleDict[ImgUtils.KEY_SAMPLE_RED], sampleDict[
                 ImgUtils.KEY_SAMPLE_WHITE]
         # 要预测的图片
         # predict = getImg("../../result/predict3_white/ting.jpg")
@@ -164,7 +166,7 @@ class HistogramTools:
 
         LogUtils.log("HistogramTools", "完成'" + keyNameCN + "'的绘制")
         colorResult = HistogramTools.getMostFrequentWord([
-            lab_color, hsv_color, ycrcbs_color
+            lab_color, hsv_color, rgb_color, ycrcbs_color
         ])
         colorCNName = ImgUtils.COLOR_SAMPLE_CN_NAME_BY_KEY[colorResult]
         LogUtils.log("HistogramTools", "统计'" + keyNameCN + "'颜色结果为'" + colorCNName + "'色！")
@@ -202,6 +204,7 @@ class HistogramTools:
         LogUtils.log("HistogramTools", keyNameCN + "的直方图数据包装完成！")
         return ImgUtils.getcvImgFromFigure(fig), colorResultWithImg
 
+
     @staticmethod
     def getMostFrequentWord(arr):
         """
@@ -210,6 +213,7 @@ class HistogramTools:
         :return:
         """
         return HistogramTools.most_common(arr)
+
 
     @staticmethod
     def most_common(L):
@@ -233,10 +237,10 @@ class HistogramTools:
         return max(groups, key=_auxfun)[0]
 
 
-if __name__ == '__main__':
-    roi = ImgUtils.getImg("../result/predict_white/ke.jpg")
-    fig = plt.figure(figsize=(10, 10))
-    sampleDict = ImgUtils.getSampleDict()
-    img, color = HistogramTools.getDistanceByDifferentColorSpace(fig, roi, KEY_ting, sampleDict)
-    ImgUtils.cvshow(img)
-    # d = getMostFrequentWord(['张三', '张三', '李斯', '王五', '赵六', '王五'])
+# if __name__ == '__main__':
+roi = ImgUtils.getImg("../result/yellow/ting.jpg")
+fig = plt.figure(figsize=(10, 10))
+sampleDict = ImgUtils.getSampleDict()
+img, color = HistogramTools.getDistanceByDifferentColorSpace(fig, roi, KEY_ting, sampleDict)
+ImgUtils.cvshow(img)
+# d = getMostFrequentWord(['张三', '张三', '李斯', '王五', '赵六', '王五'])

@@ -13,6 +13,8 @@ class BackendThread:
         """
         signal = pyqtSignal(dict)
 
+
+
         # 进度条
         progressSignal = pyqtSignal(dict)
 
@@ -27,6 +29,7 @@ class BackendThread:
             # 一定要调用父类，不然这个线程可能执行不了
             super(BackendThread.InnerThread, self).__init__(parent)  # 一定要传入这个！！！
             LogUtils.log("BackendThread", "正在生成UI线程...")
+            self.instance = self
             self.callBackFun = callbackFun
             self.invokeParam = invokeParam
             self.callBackParam = callbackParam

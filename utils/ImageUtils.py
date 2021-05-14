@@ -164,7 +164,7 @@ class ImgUtils:
 
         im = nparrayImg
         im = QImage(im.data, im.shape[1], im.shape[0], im.shape[1] * 3, QImage.Format_RGB888)
-        # im = QtGui.QImage(im.data, im.shape[1], im.shape[0], QtGui.QImage.Format_RGB888)
+        # im = QImage(im.data, im.shape[1], im.shape[0], QImage.Format_RGB888)
         return QPixmap(im).scaled(newWidth, newHeight)
 
     @staticmethod

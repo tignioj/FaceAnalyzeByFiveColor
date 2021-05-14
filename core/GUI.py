@@ -2,7 +2,7 @@ import re
 import time
 
 from core.BackGroundThread import BackendThread
-from utils.ImageUtils import *
+from utils.ImageUtils import ImgUtils
 import cv2
 import sys
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
@@ -14,8 +14,7 @@ from designer.ReportPageImpl import ReportPageImpl
 from designer.GUIDesigner import *
 from core.faceHealthDetect import *
 from FaceLandMark import faceDetection
-from utils import ImageUtils
-from utils.ImageUtils import ImgUtils
+from utils.LogUtils import LogUtils
 
 
 class MainGUI(QMainWindow, Ui_MainWindow):
@@ -52,7 +51,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.cameraTimer = QtCore.QTimer()
 
         # 摄像头
-        self.CAM_NUM = 0
+        self.CAMERA_NUMBER = 1
         self.labelImageState = MainGUI.__IMAGE_LABEL_STATE_NONE  # 0表示无图像，1表示开启摄像头读取图像，2表示打开图像文件
 
         # 信息区
@@ -70,7 +69,8 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.EdgeTractThrehold2 = self.EdgeTractThrehold1 + 200
         self.prevFrameTime = 0
         self.newFrameTime = 0
-        self.videoCapture = cv2.VideoCapture(self.CAM_NUM, cv2.CAP_DSHOW)
+        # self.videoCapture = cv2.VideoCapture(self.CAMERA_NUMBER, cv2.CAP_DSHOW)
+        self.videoCapture = cv2.VideoCapture(self.CAMERA_NUMBER)
 
         # UI初始化
         self.setupUi(self)
@@ -167,7 +167,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         LogUtils.log("GUI-openCamera", "准备打开摄像头, 更新UI的计时器状态：", self.cameraTimer.isActive())
         self.appendInfo("尝试打开摄像头")
         if not self.cameraTimer.isActive():
-            flag = self.videoCapture.open(self.CAM_NUM, cv2.CAP_DSHOW)
+            flag = self.videoCapture.open(self.CAMERA_NUMBER)
             if not flag:
                 QtWidgets.QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QtWidgets.QMessageBox.Ok)
                 self.appendError("摄像头未能成功打开！")
@@ -208,7 +208,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         cv2.putText(currentFrame, s, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
 
         # 将图像转换为pixmap
-        showImage = ImageUtils.nparrayToQPixMap(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        showImage = ImgUtils.nparrayToQPixMap(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
         self.label_showCamera.setPixmap(showImage)
 
     def releaseCamera(self):

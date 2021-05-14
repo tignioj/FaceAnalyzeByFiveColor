@@ -126,7 +126,7 @@ class __FaceDetect:
                 fe.landMarkROIDict[nameKey] = roiEntity
                 # 根据点画出折线
                 path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
-                cv2.polylines(copy, path, True, (0, 255, 0), 1)
+                cv2.polylines(copy, path, True, (0, 255, 0), 4)
                 # 加上文字
                 copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
                 # roi = imutils.resize(roi, width=200, inter=cv2.INTER_CUBIC)
@@ -166,11 +166,12 @@ faceDetection = __FaceDetect()
 
 
 def _testImage():
-    img = cv2.imread("../faces/7.jpeg")
+    img = cv2.imread("../four_color_face_sample/black.png")
     f = faceDetection
     faces = f.faceDetectByImg(img)
     for face in faces:
-        resizedImg = imutils.resize(face.drawImg, width=800, height=800)
+        # resizedImg = imutils.resize(face.drawImg, width=800, height=800)
+        resizedImg = face.drawImg
         cv2.imshow("face", resizedImg)
         cv2.waitKey(0)
         cv2.destroyAllWindows()

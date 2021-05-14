@@ -122,10 +122,11 @@ class ReportPageImpl(QMainWindow, ReportPage):
     def loadReports(self, reports):
         for r in reports:
             sz = self.label_face_drawed.size()
-            img = imutils.resize(r.drawImg, width=sz.width(), height=sz.height())
-            pimg = ImgUtils.nparrayToQPixMap(img)
-            self.label_face_drawed.setPixmap(pimg)
-            self.label_face_drawed.largePixMap = pimg
+            prevDrawImg = imutils.resize(r.drawImg, width=sz.width(), height=sz.height())
+            pixMapPrevDrawImg = ImgUtils.nparrayToQPixMap(prevDrawImg)
+            pixMapSrcDrawImg = ImgUtils.nparrayToQPixMap(r.drawImg)
+            self.label_face_drawed.setPixmap(pixMapPrevDrawImg)
+            self.label_face_drawed.largePixMap = pixMapSrcDrawImg
             self.label_username.setText(str(r.username))
             self.label_sex.setText(str(r.gender))
 
