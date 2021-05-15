@@ -133,6 +133,7 @@ class HistogramTools:
                                                   sample_red=sampleRedTrim,
                                                   sample_white=sampleWhiteTrim)
 
+        LogUtils.log("HistogramTools", keyNameCN + "距离数组：",   distanceDict)
         # 2.2 获取melts算法的距离
         # melts = distanceDict["melt"][0]
         # melt_color = distanceDict["melt"][1]

@@ -130,11 +130,11 @@ class MainGUI(QMainWindow, Ui_MainWindow):
 
         # 监听视频模式
         self.radioButton_NormalImage.toggled.connect(self.radioButtonVideoModeChange)
-        self.radioButton_NormalImage.videoMode = self.__VIDEO_MODE_NORMAL
+        self.radioButton_NormalImage.skinMode = self.__VIDEO_MODE_NORMAL
         self.radioButton_SkinDetect.toggled.connect(self.radioButtonVideoModeChange)
-        self.radioButton_SkinDetect.videoMode = self.__VIDEO_MODE_SKIN
+        self.radioButton_SkinDetect.skinMode = self.__VIDEO_MODE_SKIN
         self.radioButton_FaceTract.toggled.connect(self.radioButtonVideoModeChange)
-        self.radioButton_FaceTract.videoMode = self.__VIDEO_MODE_FACE
+        self.radioButton_FaceTract.skinMode = self.__VIDEO_MODE_FACE
 
         # 监听性别
         self.radioButton_male.toggled.connect(self.radioButtonGenderChange)
@@ -161,7 +161,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
     def radioButtonVideoModeChange(self):
         radioButton = self.sender()
         if radioButton.isChecked():
-            self.videoMode = radioButton.videoMode
+            self.videoMode = radioButton.skinMode
 
     def openCamera(self):  # 打开摄像头，启动倒计时
         LogUtils.log("GUI-openCamera", "准备打开摄像头, 更新UI的计时器状态：", self.cameraTimer.isActive())

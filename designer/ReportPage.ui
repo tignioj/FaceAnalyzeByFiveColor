@@ -15,7 +15,8 @@
   </property>
   <property name="styleSheet">
    <string notr="true">* {
-	font-size:23px
+	font-size:23px;
+	background-color:white
 }</string>
   </property>
   <widget class="QWidget" name="centralwidget">
@@ -113,22 +114,6 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_7">
            <item>
-            <widget class="QPushButton" name="pushButton_save_report">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>保存报告</string>
-             </property>
-             <property name="flat">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QPushButton" name="pushButton_back_home">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -156,7 +141,7 @@
       <property name="title">
        <string>统计</string>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="verticalLayout" stretch="0,10,10,10,10,10,10,10,10">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_header">
          <item>

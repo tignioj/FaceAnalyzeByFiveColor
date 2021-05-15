@@ -88,8 +88,22 @@ class SkinTrimUtils:
         :return:
         """
 
+    min_rgb = np.array([50, 80, 100], np.uint8)
+    max_rgb = np.array([120, 255, 160], np.uint8)
+
+    min_Lab = np.array([0, 128, 127], np.uint8)
+    max_Lab = np.array([235, 143, 158], np.uint8)
+
+    min_HSV = np.array([0, 51, 40], dtype=np.uint8)
+    max_HSV = np.array([13, 255, 255], dtype=np.uint8)
+
+    min_YCrCb = np.array([0, 133, 77], np.uint8)
+    max_YCrCb = np.array([255, 173, 127], np.uint8)
+
+
+
     @staticmethod
-    def rgb(image):
+    def rgb(image, minRange=None, maxRange=None):
         """
         数据来源：
         Available online at www.sciencedirect.com
@@ -99,14 +113,14 @@ class SkinTrimUtils:
         :param img:
         :return:
         """
-        min_rgb = np.array([50, 80, 100], np.uint8)
-        max_rgb = np.array([120, 255, 160], np.uint8)
-        skinRGB = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, image, min_rgb, max_rgb)
+        if minRange is None: minRange = SkinTrimUtils.min_rgb
+        if maxRange is None: maxRange = SkinTrimUtils.max_rgb
+        skinRGB = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, image, minRange, maxRange)
         # return np.hstack([image, skinRGB])
         return skinRGB
 
     @staticmethod
-    def Lab(image):
+    def Lab(image, minRange=None, maxRange=None):
         """
         范围:
         This outputs 0≤L≤100, −127≤a≤127, −127≤b≤127 . The values are then converted to the destination data type:
@@ -117,19 +131,20 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        min_Lab = np.array([0, 128, 127], np.uint8)
-        max_Lab = np.array([235, 143, 158], np.uint8)
+
         # min_Lab = np.array([127, 128, 0], np.uint8)
         # max_Lab = np.array([158, 143, 255], np.uint8)
 
         imageLab = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
-        skinLab = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image,imageLab, min_Lab, max_Lab)
+        if minRange is None: minRange = SkinTrimUtils.min_Lab
+        if maxRange is None: maxRange = SkinTrimUtils.max_Lab
+        skinLab = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageLab, minRange, maxRange)
 
         # return np.hstack([image, skinLab])
         return skinLab
 
     @staticmethod
-    def hsv(image):
+    def hsv(image, minRange=None, maxRange=None):
         """
         色相是颜色模型的颜色部分，并表示为0到360度之间的数字。在OpenCV中为0-180。定义主色[R，Y，G，C，B，M]
         饱和度是颜色中的灰色量，从0到100％。
@@ -154,15 +169,17 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        min_HSV = np.array([0, 51, 40], dtype="uint8")
-        max_HSV = np.array([13, 255, 255], dtype="uint8")
+        if minRange is None: minRange = SkinTrimUtils.min_HSV
+        if maxRange is None: maxRange = SkinTrimUtils.max_HSV
+
         # Get pointer to video frames from primary device
         imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        skinHSV = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageHSV, min_HSV, max_HSV)
+        skinHSV = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageHSV, minRange,
+                                                                maxRange)
         return skinHSV
 
     @staticmethod
-    def YCrCb(image):
+    def YCrCb(image, minRange, maxRange):
         """
         相关论文
         [1]Vladimir Vezhnevets ∗ Vassili Sazonov. Alla Andreeva. Comparison between YCbCr Color Space and CIELab Color Space for Skin Color Segmentation[D]. International Conference Graphicon 2003. Moscow, Russia. http://www.graphicon.ru/
@@ -176,10 +193,10 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        min_YCrCb = np.array([0, 133, 77], np.uint8)
-        max_YCrCb = np.array([255, 173, 127], np.uint8)
+        if minRange is None: minRange = SkinTrimUtils.min_YCrCb
+        if maxRange is None: maxRange = SkinTrimUtils.max_YCrCb
         imageYCrCb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-        skinYCrCb = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageYCrCb, min_YCrCb, max_YCrCb)
+        skinYCrCb = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageYCrCb, minRange, maxRange)
         return skinYCrCb
 
 

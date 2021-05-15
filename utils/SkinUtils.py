@@ -404,9 +404,12 @@ class SkinUtils:
             if k == 0:
                 return 0, 0, 0
             # 计算出了Y, Cr, Cb的均值
-            Y0 = int(round(Y / k))
-            Cr0 = int(round(Cr / k))
-            Cb0 = int(round(Cb / k))
+            Y0 = round(Y / k)
+            Cr0 = round(Cr / k)
+            Cb0 = round(Cb / k)
+            a, b, c = cv2.split(img_YCrCb)
+            # print("calc:Y", Y0, ", Cr", Cr0, ",Cb", Cb0)
+            # print("mean:Y", round((a[a > 0]).mean()), ", Cr", round((b[a > 0]).mean()), ",Cb", round((c[a > 0]).mean()))
             return Y0, Cr0, Cb0
 
         pY, pCr, pCb = trimBlack(predict)
@@ -473,7 +476,8 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 # videoCapture = cv2.VideoCapture(1)
 
 def _testHist():
-    img = cv2.imread("../result/predict_white/ke.jpg")
+    # img = cv2.imread("../result/predict_white/ke.jpg")
+    img = cv2.imread("../result/chi/ke.jpg")
     sampleDict = ImgUtils.getSampleDict()
     roiName = KEY_ke
     fig = plt.figure()
@@ -497,7 +501,8 @@ def _testHist():
 
 
 def _testScatter():
-    img = cv2.imread("../result/predict_white/ke.jpg")
+    # img = cv2.imread("../result/predict_white/ke.jpg")
+    img = cv2.imread("../result/chi/ke.jpg")
     sampleDict = ImgUtils.getSampleDict()
     fig = plt.figure()
     # result1 = SkinUtils.skinScatter(fig, img, COLOR_MODE_HSV, KEY_ting, sampleDict)
