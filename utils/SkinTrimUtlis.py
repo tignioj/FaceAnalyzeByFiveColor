@@ -20,6 +20,8 @@ Multi-Color Space Threshold
 # https://nalinc.github.io/blog/2018/skin-detection-python-opencv/
 
 # Required modules
+import random
+
 import cv2
 import imutils
 import numpy as np
@@ -31,7 +33,7 @@ class SkinTrimUtils:
     _sd = Skin_Detect()
 
     @staticmethod
-    def _maskAndErodeAndDilateAndSmooth(srcImg, colorSpaceImg, min, max):
+    def _maskAndErodeAndDilateAndSmooth(srcImg, colorSpaceImg, min, max, kernelSize=11, iteration=2):
         """
         掩码后，执行收缩膨胀，最后平滑处理
         :param colorSpaceImg:
@@ -39,13 +41,13 @@ class SkinTrimUtils:
         :param max:
         :return:
         """
-        skinMask = cv2.inRange(colorSpaceImg, min, max)
-        skinMask = SkinTrimUtils._getMask(skinMask)
-        skin = cv2.bitwise_and(srcImg, srcImg, mask=skinMask)
-        return skin
+        skinMaskRange = cv2.inRange(colorSpaceImg, min, max)
+        skinMaskAfter = SkinTrimUtils._getMask(skinMaskRange, kernelSize, iteration)
+        skin = cv2.bitwise_and(srcImg, srcImg, mask=skinMaskAfter)
+        return skin, skinMaskRange, skinMaskAfter
 
     @staticmethod
-    def rgb_hsv_ycbcr(image):
+    def rgb_hsv_ycbcr(image, kernelSize, iteration):
         """
         数据来源：
         Nusirwan Anwar bin Abdul Rahman, Kit Chong Wei and John See†
@@ -55,18 +57,18 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        skinMask = SkinTrimUtils._sd.RGB_H_CbCr(image, False)
-        skinMask = SkinTrimUtils._getMask(skinMask)
-        skin = cv2.bitwise_and(image, image, mask=skinMask)
-        return skin
+        skinMaskRange = SkinTrimUtils._sd.RGB_H_CbCr(image, False)
+        skinMaskAfter = SkinTrimUtils._getMask(skinMaskRange, kernelSize, iteration)
+        skin = cv2.bitwise_and(image, image, mask=skinMaskAfter)
+        return skin, skinMaskRange, skinMaskAfter
 
     @staticmethod
-    def _getMask(skinMask):
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
-        skinMask = cv2.erode(skinMask, kernel, iterations=2)
-        skinMask = cv2.dilate(skinMask, kernel, iterations=2)
-        # blur the mask to help remove noise, then apply the
-        # mask to the frame
+    def _getMask(skinMask, kernelSize=11, iterations=2):
+        if kernelSize is not None and iterations is not None and kernelSize > 0 and iterations > 0:
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernelSize, kernelSize))
+            skinMask = cv2.erode(skinMask, kernel, iterations=iterations)
+            skinMask = cv2.dilate(skinMask, kernel, iterations=iterations)
+
         skinMask = cv2.GaussianBlur(skinMask, (3, 3), 0)
         return skinMask
 
@@ -100,10 +102,8 @@ class SkinTrimUtils:
     min_YCrCb = np.array([0, 133, 77], np.uint8)
     max_YCrCb = np.array([255, 173, 127], np.uint8)
 
-
-
     @staticmethod
-    def rgb(image, minRange=None, maxRange=None):
+    def rgb(image, minRange=None, maxRange=None, kernelSize=None, iteration=None):
         """
         数据来源：
         Available online at www.sciencedirect.com
@@ -115,12 +115,14 @@ class SkinTrimUtils:
         """
         if minRange is None: minRange = SkinTrimUtils.min_rgb
         if maxRange is None: maxRange = SkinTrimUtils.max_rgb
-        skinRGB = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, image, minRange, maxRange)
+        skinRGB, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, image, minRange,
+                                                                                              maxRange, kernelSize,
+                                                                                              iteration)
         # return np.hstack([image, skinRGB])
-        return skinRGB
+        return skinRGB, skinMaskRange, skinMaskAfter
 
     @staticmethod
-    def Lab(image, minRange=None, maxRange=None):
+    def Lab(image, minRange=None, maxRange=None, kernelSize=None, iteration=None):
         """
         范围:
         This outputs 0≤L≤100, −127≤a≤127, −127≤b≤127 . The values are then converted to the destination data type:
@@ -138,13 +140,15 @@ class SkinTrimUtils:
         imageLab = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
         if minRange is None: minRange = SkinTrimUtils.min_Lab
         if maxRange is None: maxRange = SkinTrimUtils.max_Lab
-        skinLab = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageLab, minRange, maxRange)
+        skinLab, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageLab, minRange,
+                                                                                              maxRange, kernelSize,
+                                                                                              iteration)
 
         # return np.hstack([image, skinLab])
-        return skinLab
+        return skinLab, skinMaskRange, skinMaskAfter
 
     @staticmethod
-    def hsv(image, minRange=None, maxRange=None):
+    def hsv(image, minRange=None, maxRange=None, kernelSize=None, iteration=None):
         """
         色相是颜色模型的颜色部分，并表示为0到360度之间的数字。在OpenCV中为0-180。定义主色[R，Y，G，C，B，M]
         饱和度是颜色中的灰色量，从0到100％。
@@ -174,12 +178,13 @@ class SkinTrimUtils:
 
         # Get pointer to video frames from primary device
         imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        skinHSV = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageHSV, minRange,
-                                                                maxRange)
-        return skinHSV
+        skinHSV, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageHSV, minRange,
+                                                                                              maxRange, kernelSize,
+                                                                                              iteration)
+        return skinHSV, skinMaskRange, skinMaskAfter
 
     @staticmethod
-    def YCrCb(image, minRange, maxRange):
+    def YCrCb(image, minRange=None, maxRange=None, kernelSize=None, iteration=None):
         """
         相关论文
         [1]Vladimir Vezhnevets ∗ Vassili Sazonov. Alla Andreeva. Comparison between YCbCr Color Space and CIELab Color Space for Skin Color Segmentation[D]. International Conference Graphicon 2003. Moscow, Russia. http://www.graphicon.ru/
@@ -196,8 +201,11 @@ class SkinTrimUtils:
         if minRange is None: minRange = SkinTrimUtils.min_YCrCb
         if maxRange is None: maxRange = SkinTrimUtils.max_YCrCb
         imageYCrCb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-        skinYCrCb = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageYCrCb, minRange, maxRange)
-        return skinYCrCb
+        skinYCrCb, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageYCrCb,
+                                                                                                minRange, maxRange,
+                                                                                                kernelSize,
+                                                                                                iteration)
+        return skinYCrCb, skinMaskRange, skinMaskAfter
 
 
 def testVideo():
@@ -228,8 +236,13 @@ def testVideo():
 
 def testImage():
     # frame = cv2.imread("../faces/7.jpeg")
-    frame = cv2.imread("../faces/dark.jpg")
+    frame = cv2.imread("../faces/dark.jpeg")
     frame = imutils.resize(frame, width=600)
+    np.ones((5, 5), np.uint8)
+    r = str(random.randint(0, 1000))
+    cv2.imshow("before" + r, frame)
+    frame = cv2.morphologyEx(frame, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+    cv2.imshow("after" + r, frame)
     cv2.imshow('rgb', SkinTrimUtils.rgb(frame.copy()))
     cv2.imshow('hsv', SkinTrimUtils.hsv(frame.copy()))
     cv2.imshow('yCrCb', SkinTrimUtils.YCrCb(frame.copy()))

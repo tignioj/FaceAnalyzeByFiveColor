@@ -96,9 +96,23 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         # 如果视频的宽：高 > 显示区域的宽：高，说明应该以视频的宽度作为基准，计算出新的高度
         return imutils.resize(frame, width=fixW, height=fixH)
 
+    def maskOptionChange(self):
+        ks = self.horizontalSlider_kernelSize.value()
+        it = self.horizontalSlider_iterations.value()
+        s = "ks:" + str(ks) + ", its:" + str(it)
+        self.lineEdit_option.setText(s)
+
     def initSlot(self):
         self.pushButtonOpenCamera.clicked.connect(self.openCamera)
         self.pushButtonpushButtonCloseCamera.clicked.connect(self.closeCamera)
+
+        self.horizontalSlider_kernelSize.setMaximum(50)
+        self.horizontalSlider_kernelSize.setMinimum(0)
+        self.horizontalSlider_kernelSize.valueChanged.connect(self.maskOptionChange)
+
+        self.horizontalSlider_iterations.setMaximum(20)
+        self.horizontalSlider_iterations.setMinimum(0)
+        self.horizontalSlider_iterations.valueChanged.connect(self.maskOptionChange)
 
         self.radioButton_melt.toggled.connect(self.radioButton_modeChange)
         self.radioButton_melt.skinMode = self.__VIDEO_Melt
@@ -209,8 +223,8 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
             self.horizontalSlider_max3.setMinimum(radioButton.minRange[2])
             self.horizontalSlider_max3.setMaximum(radioButton.maxRange[2])
 
-            self.currentMinRange = radioButton.currentMinRangeValue.copy()
-            self.currentMaxRange = radioButton.currentMaxRangeValue.copy()
+            self.currentMinRange = radioButton.currentMinRangeValue
+            self.currentMaxRange = radioButton.currentMaxRangeValue
 
             self.lineEdit_minRange.setText(str(radioButton.currentMinRangeValue))
             self.lineEdit_maxRange.setText(str(radioButton.currentMaxRangeValue))
@@ -249,18 +263,25 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
 
     def showCameraAfter(self):
         currentFrame = self.readCamera()
+        skinMaskRange, skinMaskAfter = np.ones([self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]]), np.ones(
+            [self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]])
         currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
                                                                          self.__IMAGE_LABEL_SIZE[1])
+
+        ks, it = self.horizontalSlider_kernelSize.value(), self.horizontalSlider_iterations.value()
         if self.skinMode == self.__VIDEO_Melt:
-            currentFrame = SkinTrimUtils.rgb_hsv_ycbcr(currentFrame)
+            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.rgb_hsv_ycbcr(currentFrame, ks, it)
         elif self.skinMode == self.__VIDEO_RGB:
-            currentFrame = SkinTrimUtils.rgb(currentFrame, self.currentMinRange, self.currentMaxRange)
+            currentFrame ,skinMaskRange, skinMaskAfter = SkinTrimUtils.rgb(currentFrame, self.currentMinRange, self.currentMaxRange, ks, it)
         elif self.skinMode == self.__VIDEO_HSV:
-            currentFrame = SkinTrimUtils.hsv(currentFrame, self.currentMinRange, self.currentMaxRange)
+            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.hsv(currentFrame, self.currentMinRange,
+                                                                           self.currentMaxRange, ks, it)
         elif self.skinMode == self.__VIDEO_Lab:
-            currentFrame = SkinTrimUtils.Lab(currentFrame, self.currentMinRange, self.currentMaxRange)
+            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.Lab(currentFrame, self.currentMinRange,
+                                                                           self.currentMaxRange, ks, it)
         elif self.skinMode == self.__VIDEO_YCrCb:
-            currentFrame = SkinTrimUtils.YCrCb(currentFrame, self.currentMinRange, self.currentMaxRange)
+            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.YCrCb(currentFrame, self.currentMinRange,
+                                                                             self.currentMaxRange, ks, it)
 
         # 计算FPS
         self.new_before_frame_time = time.time()
@@ -272,7 +293,11 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
 
         # 将图像转换为pixmap
         showImage = ImgUtils.nparrayToQPixMap(currentFrame)
+        showSkinMaskRange = ImgUtils.nparrayToQPixMap(skinMaskRange)
+        showSkinMaskAfter = ImgUtils.nparrayToQPixMap(skinMaskAfter)
         self.label_after.setPixmap(showImage)
+        self.label_mask1.setPixmap(showSkinMaskRange)
+        self.label_mask2.setPixmap(showSkinMaskAfter)
 
     def appendError(self, text):
         "追加错误信息"
