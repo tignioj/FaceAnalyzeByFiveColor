@@ -1,3 +1,4 @@
+import json
 import re
 import sys
 import time
@@ -20,14 +21,23 @@ from utils.LogUtils import LogUtils
 
 
 class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
-    __IMAGE_LABEL_SIZE = (800, 600)
+    __IMAGE_LABEL_SIZE = (800, 400)
     "显示图像区域大小"
 
-    __VIDEO_RGB = 0
-    __VIDEO_Lab = 1
-    __VIDEO_HSV = 2
-    __VIDEO_YCrCb = 3
-    __VIDEO_Melt = 4
+    __VIDEO_RGB = "RGB"
+    __VIDEO_Lab = "Lab"
+    __VIDEO_HSV = "HSV"
+    __VIDEO_YCrCb = "YCrCb"
+    __VIDEO_Melt = "Melt"
+
+    __KEY_KernelSize = "KernelSize"
+    __KEY_Iterations = "Iterations"
+    __KEY_THRESHOLD_RANGE_MIN = "tmin"
+    __KEY_THRESHOLD_RANGE_MAX = "tmax"
+
+    __KEY_MIN_RANGE = "range_min"
+    __KEY_MAX_RANGE = "range_max"
+
     "视频模式"
 
     def __init__(self):
@@ -42,27 +52,98 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.prev_after_frame_time = 0
         self.new_after_frame_time = 0
         self.skinMode = self.__VIDEO_Melt
+        self.initUI()
         self.initRange()
         self.initSlot()
 
+    def initUI(self):
+        def setWH(label):
+            label.setFixedWidth(self.__IMAGE_LABEL_SIZE[0])
+            label.setFixedHeight(self.__IMAGE_LABEL_SIZE[1])
+
+        setWH(self.label_show_before)
+        setWH(self.label_show_after)
+        setWH(self.label_show_mask1)
+        setWH(self.label_show_mask2)
+
     def initRange(self):
-        self.min_melt = np.array([0, 0, 0], np.uint8)
-        self.max_melt = np.array([255, 255, 255], np.uint8)
+        self.min_melt = [0, 0, 0]
+        self.max_melt = [255, 255, 255]
 
-        self.min_rgb = SkinTrimUtils.min_rgb
-        self.max_rgb = SkinTrimUtils.max_rgb
+        self.min_rgb = SkinTrimUtils.min_rgb.copy()
+        self.max_rgb = SkinTrimUtils.max_rgb.copy()
 
-        self.min_Lab = SkinTrimUtils.min_Lab
-        self.max_Lab = SkinTrimUtils.max_Lab
+        self.min_Lab = SkinTrimUtils.min_Lab.copy()
+        self.max_Lab = SkinTrimUtils.max_Lab.copy()
 
-        self.min_HSV = SkinTrimUtils.min_HSV
-        self.max_HSV = SkinTrimUtils.max_HSV
+        self.min_HSV = SkinTrimUtils.min_HSV.copy()
+        self.max_HSV = SkinTrimUtils.max_HSV.copy()
 
-        self.min_YCrCb = SkinTrimUtils.min_YCrCb
-        self.max_YCrCb = SkinTrimUtils.max_YCrCb
+        self.min_YCrCb = SkinTrimUtils.min_YCrCb.copy()
+        self.max_YCrCb = SkinTrimUtils.max_YCrCb.copy()
 
-        self.currentMinRange = self.min_rgb
-        self.currentMaxRange = self.max_rgb
+        self.paramDict = {
+            self.__VIDEO_Melt: {
+                self.__KEY_THRESHOLD_RANGE_MIN: self.min_melt,
+                self.__KEY_THRESHOLD_RANGE_MAX: self.max_melt,
+                self.__KEY_MIN_RANGE: [0, 0, 0],
+                self.__KEY_MAX_RANGE: [255, 255, 255],
+                self.__KEY_KernelSize: 7,
+                self.__KEY_Iterations: 2
+            },
+            self.__VIDEO_RGB: {
+                self.__KEY_THRESHOLD_RANGE_MIN: self.min_rgb,
+                self.__KEY_THRESHOLD_RANGE_MAX: self.max_rgb,
+                self.__KEY_MIN_RANGE: [0, 0, 0],
+                self.__KEY_MAX_RANGE: [255, 255, 255],
+                self.__KEY_KernelSize: 7,
+                self.__KEY_Iterations: 2
+            },
+            self.__VIDEO_Lab: {
+                self.__KEY_THRESHOLD_RANGE_MIN: self.min_Lab,
+                self.__KEY_THRESHOLD_RANGE_MAX: self.max_Lab,
+                self.__KEY_MIN_RANGE: [0, 1, 1],
+                self.__KEY_MAX_RANGE: [180, 255, 255],
+                self.__KEY_KernelSize: 7,
+                self.__KEY_Iterations: 2
+
+            },
+            self.__VIDEO_HSV: {
+                self.__KEY_THRESHOLD_RANGE_MIN: self.min_HSV,
+                self.__KEY_THRESHOLD_RANGE_MAX: self.max_HSV,
+                self.__KEY_MIN_RANGE: [0, 0, 0],
+                self.__KEY_MAX_RANGE: [180, 255, 255],
+                self.__KEY_KernelSize: 7,
+                self.__KEY_Iterations: 2
+
+            },
+            self.__VIDEO_YCrCb: {
+                self.__KEY_THRESHOLD_RANGE_MIN: self.min_YCrCb,
+                self.__KEY_THRESHOLD_RANGE_MAX: self.max_YCrCb,
+                self.__KEY_MIN_RANGE: [0, 0, 0],
+                self.__KEY_MAX_RANGE: [255, 255, 255],
+                self.__KEY_KernelSize: 7,
+                self.__KEY_Iterations: 2
+            }
+        }
+
+        self.initSliderValue()
+
+    def initSliderValue(self):
+        self.horizontalSlider_iterations.setValue(2)
+        self.horizontalSlider_kernelSize.setValue(7)
+        self.radioButton_melt.click()
+
+    def changeParamDict(self, colorMode, key, value=None, index=None):
+        if index is not None:
+            self.paramDict[colorMode][key][index] = value
+        else:
+            self.paramDict[colorMode][key] = value
+
+        self.analyze()
+
+    def getParamDict(self):
+        return self.paramDict
 
     def releaseCamera(self):
         LogUtils.log("GUI", "尝试释放相机")
@@ -76,8 +157,8 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.videoCapture.release()
         LogUtils.log("GUI", "成功关闭摄像头")
 
-        self.label_before.clear()
-        self.label_after.clear()
+        self.label_show_before.clear()
+        self.label_show_after.clear()
 
     def closeCamera(self):
         LogUtils.log("GUI", "尝试关闭相机")
@@ -97,23 +178,73 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         return imutils.resize(frame, width=fixW, height=fixH)
 
     def maskOptionChange(self):
+        sender = self.sender()
         ks = self.horizontalSlider_kernelSize.value()
         it = self.horizontalSlider_iterations.value()
+        self.changeParamDict(sender.colorMode, self.__KEY_KernelSize, ks)
+        self.changeParamDict(sender.colorMode, self.__KEY_Iterations, it)
         s = "ks:" + str(ks) + ", its:" + str(it)
+
         self.lineEdit_option.setText(s)
 
+    def saveParam(self):
+        with open('param.txt', 'w') as outfile:
+            json.dump(self.paramDict, outfile)
+        self.appendInfo("保存成功！")
+
+    def loadParam(self):
+        with open('param.txt', 'r') as infile:
+            j = json.load(infile)
+
+        self.paramDict = j
+        self.appendInfo("读取成功！")
+        m = self.skinMode
+        if m == self.__VIDEO_Lab:
+            self.radioButton_Lab.click()
+        elif m == self.__VIDEO_HSV:
+            self.radioButton_HSV.click()
+        elif m == self.__VIDEO_RGB:
+            self.radioButton_RGB.click()
+        elif m == self.__VIDEO_YCrCb:
+            self.radioButton_YCrCb.click()
+        else:
+            self.radioButton_melt.click()
+
+    def resetParam(self):
+        self.initRange()
+
+    def openFile(self):
+        self.appendInfo("准备打开文件")
+        curPath = QDir.currentPath()
+        imagePath, imgType = QFileDialog.getOpenFileName(self, "打开图片", curPath,
+                                                         " *.jpg;;*.png;;*.jpeg;;*.bmp;;All Files (*)")
+        LogUtils.log("SkinDetect", "准备打开文件" + imagePath)
+        if imgType == "" or imagePath == "":
+            self.appendInfo("取消选择文件")
+            return
+        image = cv2.imread(imagePath, cv2.IMREAD_COLOR)
+        qpixMap = ImgUtils.nparrayToQPixMap(image, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        largePixMap = ImgUtils.nparrayToQPixMap(image)
+        self.label_show_before.setLargePixMap(largePixMap)
+        self.label_show_before.setSrcImg(image)
+        self.releaseCamera()
+        self.label_show_before.setPixmap(qpixMap)
+        self.analyze()
+
+    def analyze(self):
+        self.showCameraAfter()
+
     def initSlot(self):
+        # 按钮区
         self.pushButtonOpenCamera.clicked.connect(self.openCamera)
         self.pushButtonpushButtonCloseCamera.clicked.connect(self.closeCamera)
+        self.pushButton_save.clicked.connect(self.saveParam)
+        self.pushButton_load.clicked.connect(self.loadParam)
+        self.pushButton_reset.clicked.connect(self.resetParam)
+        self.pushButton_import.clicked.connect(self.openFile)
 
-        self.horizontalSlider_kernelSize.setMaximum(50)
-        self.horizontalSlider_kernelSize.setMinimum(0)
-        self.horizontalSlider_kernelSize.valueChanged.connect(self.maskOptionChange)
-
-        self.horizontalSlider_iterations.setMaximum(20)
-        self.horizontalSlider_iterations.setMinimum(0)
-        self.horizontalSlider_iterations.valueChanged.connect(self.maskOptionChange)
-
+        # ===================== 设置 Radio Button ==========================
+        self.radioButton_melt.colorMode = self.__VIDEO_Melt
         self.radioButton_melt.toggled.connect(self.radioButton_modeChange)
         self.radioButton_melt.skinMode = self.__VIDEO_Melt
         self.radioButton_melt.minRange = np.array([0, 0, 0], np.uint8)
@@ -124,6 +255,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.radioButton_melt.labelB = "B"
         self.radioButton_melt.labelC = "C"
 
+        self.radioButton_HSV.colorMode = self.__VIDEO_HSV
         self.radioButton_HSV.toggled.connect(self.radioButton_modeChange)
         self.radioButton_HSV.skinMode = self.__VIDEO_HSV
         self.radioButton_HSV.minRange = np.array([0, 0, 0], np.uint8)
@@ -134,6 +266,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.radioButton_HSV.labelB = "S"
         self.radioButton_HSV.labelC = "V"
 
+        self.radioButton_RGB.colorMode = self.__VIDEO_RGB
         self.radioButton_RGB.toggled.connect(self.radioButton_modeChange)
         self.radioButton_RGB.skinMode = self.__VIDEO_RGB
         self.radioButton_RGB.minRange = np.array([0, 0, 0], np.uint8)
@@ -144,6 +277,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.radioButton_RGB.labelB = "G"
         self.radioButton_RGB.labelC = "B"
 
+        self.radioButton_Lab.colorMode = self.__VIDEO_Lab
         self.radioButton_Lab.toggled.connect(self.radioButton_modeChange)
         self.radioButton_Lab.skinMode = self.__VIDEO_Lab
         self.radioButton_Lab.minRange = np.array([0, 0, 0], np.uint8)
@@ -154,6 +288,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.radioButton_Lab.labelB = "a"
         self.radioButton_Lab.labelC = "b"
 
+        self.radioButton_YCrCb.colorMode = self.__VIDEO_YCrCb
         self.radioButton_YCrCb.toggled.connect(self.radioButton_modeChange)
         self.radioButton_YCrCb.skinMode = self.__VIDEO_YCrCb
         self.radioButton_YCrCb.minRange = np.array([0, 0, 0], np.uint8)
@@ -164,83 +299,142 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.radioButton_YCrCb.labelB = "Cr"
         self.radioButton_YCrCb.labelC = "Cb"
 
+        # ======================= 设置Slider ==================================
+        self.sliderThresholdLock = False
+        "当为True的时候，不允许设置阈值，为了防止更改颜色模式最值的时候出发sliderValueChange事件"
+
+        # 选项
+        self.horizontalSlider_kernelSize.setMaximum(50)
+        self.horizontalSlider_kernelSize.setMinimum(0)
+        self.horizontalSlider_kernelSize.valueChanged.connect(self.maskOptionChange)
+        self.horizontalSlider_kernelSize.colorMode = None
+
+        self.horizontalSlider_iterations.setMaximum(20)
+        self.horizontalSlider_iterations.setMinimum(0)
+        self.horizontalSlider_iterations.valueChanged.connect(self.maskOptionChange)
+        self.horizontalSlider_iterations.colorMode = None
+
+        # 三通道参数
         self.horizontalSlider_min1.valueChanged.connect(self.sliderRangeChangeMin)
         self.horizontalSlider_min1.index = 0
+
         self.horizontalSlider_min2.valueChanged.connect(self.sliderRangeChangeMin)
         self.horizontalSlider_min2.index = 1
+
         self.horizontalSlider_min3.valueChanged.connect(self.sliderRangeChangeMin)
         self.horizontalSlider_min3.index = 2
 
         self.horizontalSlider_max1.valueChanged.connect(self.sliderRangeChangeMax)
         self.horizontalSlider_max1.index = 0
+
         self.horizontalSlider_max2.valueChanged.connect(self.sliderRangeChangeMax)
         self.horizontalSlider_max2.index = 1
+
         self.horizontalSlider_max3.valueChanged.connect(self.sliderRangeChangeMax)
         self.horizontalSlider_max3.index = 2
 
+        self.setSliderMode(self.__VIDEO_Melt)
+
+        # =================== 设置定时器 ===========================
         self.cameraTimerBefore.timeout.connect(self.showCameraBefore)  # 每次倒计时溢出，调用函数刷新页面
         self.cameraTimerAfter.timeout.connect(self.showCameraAfter)  # 每次倒计时溢出，调用函数刷新页面
 
+    def setSliderMode(self, mode):
+        self.horizontalSlider_min1.colorMode = mode
+        self.horizontalSlider_min2.colorMode = mode
+        self.horizontalSlider_min3.colorMode = mode
+        self.horizontalSlider_max1.colorMode = mode
+        self.horizontalSlider_max2.colorMode = mode
+        self.horizontalSlider_max3.colorMode = mode
+        self.horizontalSlider_kernelSize.colorMode = mode
+        self.horizontalSlider_iterations.colorMode = mode
+
     def sliderRangeChangeMin(self):
         slider = self.sender()
-        self.currentMinRange[slider.index] = slider.value()
-        self.lineEdit_minRange.setText(str(self.currentMinRange))
+        if not self.sliderThresholdLock:
+            self.changeParamDict(slider.colorMode, self.__KEY_THRESHOLD_RANGE_MIN, index=slider.index,
+                                 value=slider.value())
+            self.lineEdit_minRange.setText(str(self.getParamDict()[slider.colorMode][self.__KEY_THRESHOLD_RANGE_MIN]))
+            print("sliderChangeMin:", slider.colorMode, slider.value())
 
     def sliderRangeChangeMax(self):
-        slider = self.sender()
-        self.currentMaxRange[slider.index] = slider.value()
-        self.lineEdit_maxRange.setText(str(self.currentMaxRange))
+        if not self.sliderThresholdLock:
+            slider = self.sender()
+            print("sliderChangeMax:", slider.colorMode, slider.value())
+            self.changeParamDict(slider.colorMode, self.__KEY_THRESHOLD_RANGE_MAX, index=slider.index,
+                                 value=slider.value())
+            self.lineEdit_maxRange.setText(str(self.getParamDict()[slider.colorMode][self.__KEY_THRESHOLD_RANGE_MAX]))
 
     def radioButton_modeChange(self):
         radioButton = self.sender()
         if radioButton.isChecked():
             self.skinMode = radioButton.skinMode
+            self.setSliderMode(self.skinMode)
+
+            self.sliderThresholdLock = True
+            "当为True的时候，不允许设置阈值，为了防止更改颜色模式最值的时候出发sliderValueChange事件"
+
+            param = self.getParamDict()[self.skinMode]
+            print(self.skinMode, param)
+
             self.label_a.setText(
-                radioButton.labelA + ":" + str(radioButton.minRange[0]) + "-" + str(radioButton.maxRange[0]))
+                radioButton.labelA + ":" + str(param[self.__KEY_MIN_RANGE][0]) + "-" + str(
+                    param[self.__KEY_MAX_RANGE][0]))
             self.label_b.setText(
-                radioButton.labelB + ":" + str(radioButton.minRange[1]) + "-" + str(radioButton.maxRange[1]))
+                radioButton.labelB + ":" + str(param[self.__KEY_MIN_RANGE][1]) + "-" + str(
+                    param[self.__KEY_MAX_RANGE][1]))
             self.label_c.setText(
-                radioButton.labelC + ":" + str(radioButton.minRange[2]) + "-" + str(radioButton.maxRange[2]))
+                radioButton.labelC + ":" + str(param[self.__KEY_MIN_RANGE][2]) + "-" + str(
+                    param[self.__KEY_MAX_RANGE][2]))
 
-            # self.label_b.setText(radioButton.labelB + ":" + str(radioButton.))
+            # self.label_show_b.setText(radioButton.labelB + ":" + str(radioButton.))
             # self.label_c.setText(radioButton.labelC)
+            self.sliderThreadSold = True
 
-            self.horizontalSlider_min1.setMinimum(radioButton.minRange[0])
-            self.horizontalSlider_min1.setMaximum(radioButton.maxRange[0])
+            self.horizontalSlider_min1.setMinimum(param[self.__KEY_MIN_RANGE][0])
+            self.horizontalSlider_min1.setMaximum(param[self.__KEY_MAX_RANGE][0])
 
-            self.horizontalSlider_min2.setMinimum(radioButton.minRange[1])
-            self.horizontalSlider_min2.setMaximum(radioButton.maxRange[1])
+            self.horizontalSlider_min2.setMinimum(param[self.__KEY_MIN_RANGE][1])
+            self.horizontalSlider_min2.setMaximum(param[self.__KEY_MAX_RANGE][1])
 
-            self.horizontalSlider_min3.setMinimum(radioButton.minRange[2])
-            self.horizontalSlider_min3.setMaximum(radioButton.maxRange[2])
+            self.horizontalSlider_min3.setMinimum(param[self.__KEY_MIN_RANGE][2])
+            self.horizontalSlider_min3.setMaximum(param[self.__KEY_MAX_RANGE][2])
 
-            self.horizontalSlider_max1.setMinimum(radioButton.minRange[0])
-            self.horizontalSlider_max1.setMaximum(radioButton.maxRange[0])
+            self.horizontalSlider_max1.setMinimum(param[self.__KEY_MIN_RANGE][0])
+            self.horizontalSlider_max1.setMaximum(param[self.__KEY_MAX_RANGE][0])
 
-            self.horizontalSlider_max2.setMinimum(radioButton.minRange[1])
-            self.horizontalSlider_max2.setMaximum(radioButton.maxRange[1])
+            self.horizontalSlider_max2.setMinimum(param[self.__KEY_MIN_RANGE][1])
+            self.horizontalSlider_max2.setMaximum(param[self.__KEY_MAX_RANGE][1])
 
-            self.horizontalSlider_max3.setMinimum(radioButton.minRange[2])
-            self.horizontalSlider_max3.setMaximum(radioButton.maxRange[2])
+            self.horizontalSlider_max3.setMinimum(param[self.__KEY_MIN_RANGE][2])
+            self.horizontalSlider_max3.setMaximum(param[self.__KEY_MAX_RANGE][2])
 
-            self.currentMinRange = radioButton.currentMinRangeValue
-            self.currentMaxRange = radioButton.currentMaxRangeValue
+            self.sliderThresholdLock = False
 
-            self.lineEdit_minRange.setText(str(radioButton.currentMinRangeValue))
-            self.lineEdit_maxRange.setText(str(radioButton.currentMaxRangeValue))
+            # 这两个不需要设置范围，只需要设置值就可以，所以无需加锁
+            self.horizontalSlider_kernelSize.setValue(param[self.__KEY_KernelSize])
+            self.horizontalSlider_iterations.setValue(param[self.__KEY_Iterations])
 
-            self.horizontalSlider_min1.setValue(self.currentMinRange[0])
-            self.horizontalSlider_min2.setValue(self.currentMinRange[1])
-            self.horizontalSlider_min3.setValue(self.currentMinRange[2])
+            cmr = param[self.__KEY_THRESHOLD_RANGE_MIN]
+            cmx = param[self.__KEY_THRESHOLD_RANGE_MAX]
 
-            self.horizontalSlider_max1.setValue(self.currentMaxRange[0])
-            self.horizontalSlider_max2.setValue(self.currentMaxRange[1])
-            self.horizontalSlider_max3.setValue(self.currentMaxRange[2])
+            self.lineEdit_minRange.setText(str(cmr))
+            self.lineEdit_maxRange.setText(str(cmx))
+
+            self.horizontalSlider_min1.setValue(cmr[0])
+            self.horizontalSlider_min2.setValue(cmr[1])
+            self.horizontalSlider_min3.setValue(cmr[2])
+
+            self.horizontalSlider_max1.setValue(cmx[0])
+            self.horizontalSlider_max2.setValue(cmx[1])
+            self.horizontalSlider_max3.setValue(cmx[2])
 
     def showCameraBefore(self):
         currentFrame = self.readCamera()
         currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
                                                                          self.__IMAGE_LABEL_SIZE[1])
+        self.label_show_before.srcImg = currentFrame
+
         self.new_before_frame_time = time.time()
         fps = 1 / (self.new_before_frame_time - self.prev_before_frame_time)
         self.prev_before_frame_time = self.new_before_frame_time
@@ -248,40 +442,73 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
                                                                                              str(fps))
         cv2.putText(currentFrame, s, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
         # 将图像转换为pixmap
-        showImage = ImgUtils.nparrayToQPixMap(currentFrame)
-        self.label_before.setPixmap(showImage)
+        showImage = ImgUtils.nparrayToQPixMap(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        self.label_show_before.setPixmap(showImage)
+        self.label_show_before.setLargePixMap(showImage)
 
     def readCamera(self):
         flag, currentFrame = self.videoCapture.read()
         if not flag:
-            if self.cameraTimer.isActive():
-                self.cameraTimer.stop()
+            if self.cameraTimerBefore.isActive():
+                self.cameraTimerBefore.stop()
+            if self.cameraTimerAfter.isActive():
+                self.cameraTimerAfter.stop()
             self.appendError("相机未能成功读取到数据")
             self.releaseCamera()
         else:
             return currentFrame
 
     def showCameraAfter(self):
-        currentFrame = self.readCamera()
+        currentFrame = self.label_show_before.srcImg
+        if currentFrame is None:
+            currentFrame = self.readCamera()
+
         skinMaskRange, skinMaskAfter = np.ones([self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]]), np.ones(
             [self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]])
         currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
                                                                          self.__IMAGE_LABEL_SIZE[1])
 
-        ks, it = self.horizontalSlider_kernelSize.value(), self.horizontalSlider_iterations.value()
         if self.skinMode == self.__VIDEO_Melt:
-            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.rgb_hsv_ycbcr(currentFrame, ks, it)
+            currentFrame, skinMaskRange, skinMaskAfter = \
+                SkinTrimUtils.rgb_hsv_ycbcr(currentFrame,
+                                            kernelSize=self.getParamDict()[self.__VIDEO_Melt][
+                                                self.__KEY_KernelSize],
+                                            iteration=self.getParamDict()[self.__VIDEO_Melt][
+                                                self.__KEY_Iterations]
+                                            )
         elif self.skinMode == self.__VIDEO_RGB:
-            currentFrame ,skinMaskRange, skinMaskAfter = SkinTrimUtils.rgb(currentFrame, self.currentMinRange, self.currentMaxRange, ks, it)
+
+            currentFrame, skinMaskRange, skinMaskAfter = \
+                SkinTrimUtils.rgb(currentFrame,
+                                  self.getParamDict()[self.__VIDEO_RGB][self.__KEY_THRESHOLD_RANGE_MIN],
+                                  self.getParamDict()[self.__VIDEO_RGB][self.__KEY_THRESHOLD_RANGE_MAX],
+                                  self.getParamDict()[self.__VIDEO_RGB][self.__KEY_KernelSize],
+                                  self.getParamDict()[self.__VIDEO_RGB][self.__KEY_Iterations],
+                                  )
         elif self.skinMode == self.__VIDEO_HSV:
-            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.hsv(currentFrame, self.currentMinRange,
-                                                                           self.currentMaxRange, ks, it)
+            currentFrame, skinMaskRange, skinMaskAfter = \
+                SkinTrimUtils.hsv(currentFrame,
+                                  self.getParamDict()[self.__VIDEO_HSV][self.__KEY_THRESHOLD_RANGE_MIN],
+                                  self.getParamDict()[self.__VIDEO_HSV][self.__KEY_THRESHOLD_RANGE_MAX],
+                                  self.getParamDict()[self.__VIDEO_HSV][self.__KEY_KernelSize],
+                                  self.getParamDict()[self.__VIDEO_HSV][self.__KEY_Iterations],
+                                  )
         elif self.skinMode == self.__VIDEO_Lab:
-            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.Lab(currentFrame, self.currentMinRange,
-                                                                           self.currentMaxRange, ks, it)
+            currentFrame, skinMaskRange, skinMaskAfter = \
+                SkinTrimUtils.Lab(currentFrame,
+                                  self.getParamDict()[self.__VIDEO_Lab][self.__KEY_THRESHOLD_RANGE_MIN],
+                                  self.getParamDict()[self.__VIDEO_Lab][self.__KEY_THRESHOLD_RANGE_MAX],
+                                  self.getParamDict()[self.__VIDEO_Lab][self.__KEY_KernelSize],
+                                  self.getParamDict()[self.__VIDEO_Lab][self.__KEY_Iterations]
+                                  )
         elif self.skinMode == self.__VIDEO_YCrCb:
-            currentFrame, skinMaskRange, skinMaskAfter = SkinTrimUtils.YCrCb(currentFrame, self.currentMinRange,
-                                                                             self.currentMaxRange, ks, it)
+            currentFrame, skinMaskRange, skinMaskAfter = \
+                SkinTrimUtils.YCrCb(currentFrame,
+                                    self.getParamDict()[self.__VIDEO_YCrCb][self.__KEY_THRESHOLD_RANGE_MIN],
+                                    self.getParamDict()[self.__VIDEO_YCrCb][self.__KEY_THRESHOLD_RANGE_MAX],
+                                    self.getParamDict()[self.__VIDEO_YCrCb][self.__KEY_KernelSize],
+                                    self.getParamDict()[self.__VIDEO_YCrCb][self.__KEY_Iterations],
+                                    )
 
         # 计算FPS
         self.new_before_frame_time = time.time()
@@ -292,12 +519,19 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         cv2.putText(currentFrame, s, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
 
         # 将图像转换为pixmap
-        showImage = ImgUtils.nparrayToQPixMap(currentFrame)
-        showSkinMaskRange = ImgUtils.nparrayToQPixMap(skinMaskRange)
-        showSkinMaskAfter = ImgUtils.nparrayToQPixMap(skinMaskAfter)
-        self.label_after.setPixmap(showImage)
-        self.label_mask1.setPixmap(showSkinMaskRange)
-        self.label_mask2.setPixmap(showSkinMaskAfter)
+        showImage = ImgUtils.nparrayToQPixMap(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        showSkinMaskRange = ImgUtils.nparrayToQPixMap(skinMaskRange, self.__IMAGE_LABEL_SIZE[0],
+                                                      self.__IMAGE_LABEL_SIZE[1])
+        showSkinMaskAfter = ImgUtils.nparrayToQPixMap(skinMaskAfter, self.__IMAGE_LABEL_SIZE[0],
+                                                      self.__IMAGE_LABEL_SIZE[1])
+        self.label_show_after.setPixmap(showImage)
+        self.label_show_after.setLargePixMap(ImgUtils.nparrayToQPixMap(currentFrame))
+
+        self.label_show_mask1.setPixmap(showSkinMaskRange)
+        self.label_show_mask1.setLargePixMap(ImgUtils.nparrayToQPixMap(skinMaskRange))
+
+        self.label_show_mask2.setPixmap(showSkinMaskAfter)
+        self.label_show_mask2.setLargePixMap(ImgUtils.nparrayToQPixMap(skinMaskAfter))
 
     def appendError(self, text):
         "追加错误信息"

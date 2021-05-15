@@ -41,7 +41,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_ShowCamera">
+          <widget class="QLabel" name="label_showCamera">
            <property name="text">
             <string/>
            </property>
@@ -77,7 +77,7 @@
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QLineEdit" name="lineEdit_UserName"/>
+              <widget class="QLineEdit" name="lineEdit_userName"/>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_SelectGender">
@@ -89,7 +89,7 @@
              <item row="1" column="1">
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <item>
-                <widget class="QRadioButton" name="radioButton_Male">
+                <widget class="QRadioButton" name="radioButton_male">
                  <property name="styleSheet">
                   <string notr="true"/>
                  </property>
@@ -102,7 +102,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QRadioButton" name="radioButton_Female">
+                <widget class="QRadioButton" name="radioButton_female">
                  <property name="text">
                   <string>女</string>
                  </property>
@@ -179,7 +179,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QPushButton" name="button_CaptureAnalyse">
+         <widget class="QPushButton" name="button_analyze">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -278,7 +278,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QSlider" name="horizontalSlider_EdgeTract">
+           <widget class="QSlider" name="horizontalSlider_Speed">
             <property name="enabled">
              <bool>false</bool>
             </property>
@@ -475,18 +475,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>radioButton_SkinDetect</sender>
+   <sender>radioButton_FaceTract</sender>
    <signal>toggled(bool)</signal>
-   <receiver>horizontalSlider_EdgeTract</receiver>
+   <receiver>horizontalSlider_Speed</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1430</x>
-     <y>1034</y>
+     <x>737</x>
+     <y>968</y>
     </hint>
     <hint type="destinationlabel">
-     <x>981</x>
-     <y>1073</y>
+     <x>1120</x>
+     <y>1020</y>
     </hint>
    </hints>
   </connection>

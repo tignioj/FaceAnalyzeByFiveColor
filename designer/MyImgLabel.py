@@ -185,8 +185,16 @@ class MyQImgLabel(QtWidgets.QLabel):
         super(MyQImgLabel, self).__init__(parent)
         f = QFont("ZYSong18030", 10)  # Set the font, font size
         self.setFont(f)  # After the event is not defined, the two sentences are deleted or commented out.
+        self.largePixMap = None
+        self.srcImg = None
 
     '''Reload the mouse click event (click) '''
+
+    def setSrcImg(self, srcImg):
+        self.srcImg = srcImg
+
+    def setLargePixMap(self, pixMap):
+        self.largePixMap = pixMap
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:  # left button pressed

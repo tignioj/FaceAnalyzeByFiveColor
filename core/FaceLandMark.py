@@ -64,16 +64,21 @@ class __FaceDetect:
         img = np.array(img_pil)
         return img
 
-    def skinDetect(self, img, scale=1):
-        frame = SkinUtils.trimSkinRealTime(img, scale)
+    def skinDetect(self, img, scale):
+        # small_img = cv2.resize(img, (0, 0), fx=1 / scale, fy=1 / scale)
+        frame = SkinUtils.trimSkinRealTime(img)
         return frame
 
     def faceDetectRealTime(self, img, scale=1):
         self.__scale = scale
         copy = img.copy()
         small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
+        # small_img = imutils.resize(img, 300, 300)
+        # print(small_img.shape)
+        # return small_img
         # 6. 人脸检测
         faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
+        print(len(faces))
         # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
         for (i, face) in enumerate(faces):
             shape = self._predictor(small_img, face)
@@ -83,7 +88,7 @@ class __FaceDetect:
                 roiEntity = self.__ROIService.getROIRealTime(nameKey, shape, img, face, scale)
                 # 根据点画出折线
                 path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
-                cv2.polylines(copy, path, True, (0, 255, 0), 1)
+                cv2.polylines(copy, path, True, (0, 255, 0), 4)
                 # 加上中文文字: 这个方法特别卡！
                 # copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
                 # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
@@ -91,8 +96,34 @@ class __FaceDetect:
                 # cv2.imshow(nameKey, roiEntity.img)
             # 画出人脸矩形
             cv2.rectangle(copy, (face.left() * scale, face.top() * scale),
-                          (face.right() * scale, face.bottom() * scale), (255, 0, 0), 3, cv2.LINE_AA)
+                          (face.right() * scale, face.bottom() * scale), (255, 0, 0), 4, cv2.LINE_AA)
         return copy
+
+    # def faceDetectRealTime(self, img, scale=1):
+    #     self.__scale = scale
+    #     copy = img.copy()
+    #     small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
+    #     # 6. 人脸检测
+    #     faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
+    #     # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
+    #     for (i, face) in enumerate(faces):
+    #         shape = self._predictor(small_img, face)
+    #         shape = self._shape_to_np(shape)
+    #         for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
+    #             # LogUtils.log("FaceLandMark", "提取ROI..., 图像是否为空:" + str(len(img)))
+    #             roiEntity = self.__ROIService.getROIRealTime(nameKey, shape, img, face, scale)
+    #             # 根据点画出折线
+    #             path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
+    #             cv2.polylines(copy, path, True, (0, 255, 0), 4)
+    #             # 加上中文文字: 这个方法特别卡！
+    #             # copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
+    #             # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
+    #             # roi = imutils.resize(roiEntity.img, width=200, inter=cv2.INTER_CUBIC)
+    #             # cv2.imshow(nameKey, roiEntity.img)
+    #         # 画出人脸矩形
+    #         cv2.rectangle(copy, (face.left() * scale, face.top() * scale),
+    #                       (face.right() * scale, face.bottom() * scale), (255, 0, 0), 4, cv2.LINE_AA)
+    #     return copy
 
     def faceDetectByImg(self, img, scale=1, username=None, gender=None):
         # todayPath = OUTPUT_PATH + "\\" + getTodayYearMonthDayHourMinSec()
@@ -183,7 +214,7 @@ def _testVideo():
     while video_capture.isOpened():
         ret, frame = video_capture.read()
         if frame is not None:
-            detected_img = f.faceDetectRealTime(frame)
+            detected_img = f.faceDetectRealTime(frame, scale=5)
             cv2.imshow("face", detected_img)
             # Hit 'q' on the keyboard to quit!
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -193,5 +224,5 @@ def _testVideo():
 
 
 if __name__ == '__main__':
-    _testImage()
-    # _testVideo()
+    # _testImage()
+    _testVideo()

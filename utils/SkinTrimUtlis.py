@@ -47,7 +47,7 @@ class SkinTrimUtils:
         return skin, skinMaskRange, skinMaskAfter
 
     @staticmethod
-    def rgb_hsv_ycbcr(image, kernelSize, iteration):
+    def rgb_hsv_ycbcr(image, kernelSize=11, iteration=2):
         """
         数据来源：
         Nusirwan Anwar bin Abdul Rahman, Kit Chong Wei and John See†
@@ -58,6 +58,8 @@ class SkinTrimUtils:
         :return:
         """
         skinMaskRange = SkinTrimUtils._sd.RGB_H_CbCr(image, False)
+        skinMaskRange = skinMaskRange.astype(np.uint8)
+        skinMaskRange *= 255
         skinMaskAfter = SkinTrimUtils._getMask(skinMaskRange, kernelSize, iteration)
         skin = cv2.bitwise_and(image, image, mask=skinMaskAfter)
         return skin, skinMaskRange, skinMaskAfter
@@ -90,17 +92,17 @@ class SkinTrimUtils:
         :return:
         """
 
-    min_rgb = np.array([50, 80, 100], np.uint8)
-    max_rgb = np.array([120, 255, 160], np.uint8)
+    min_rgb = [50, 80, 100]
+    max_rgb = [120, 255, 160]
 
-    min_Lab = np.array([0, 128, 127], np.uint8)
-    max_Lab = np.array([235, 143, 158], np.uint8)
+    min_Lab = [0, 128, 127]
+    max_Lab = [235, 143, 158]
 
-    min_HSV = np.array([0, 51, 40], dtype=np.uint8)
-    max_HSV = np.array([13, 255, 255], dtype=np.uint8)
+    min_HSV = [0, 51, 40]
+    max_HSV = [13, 255, 255]
 
-    min_YCrCb = np.array([0, 133, 77], np.uint8)
-    max_YCrCb = np.array([255, 173, 127], np.uint8)
+    min_YCrCb = [0, 133, 77]
+    max_YCrCb = [255, 173, 127]
 
     @staticmethod
     def rgb(image, minRange=None, maxRange=None, kernelSize=None, iteration=None):
@@ -115,6 +117,9 @@ class SkinTrimUtils:
         """
         if minRange is None: minRange = SkinTrimUtils.min_rgb
         if maxRange is None: maxRange = SkinTrimUtils.max_rgb
+
+        minRange = np.asarray(minRange, dtype=np.uint8)
+        maxRange = np.asarray(maxRange, dtype=np.uint8)
         skinRGB, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, image, minRange,
                                                                                               maxRange, kernelSize,
                                                                                               iteration)
@@ -140,6 +145,10 @@ class SkinTrimUtils:
         imageLab = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
         if minRange is None: minRange = SkinTrimUtils.min_Lab
         if maxRange is None: maxRange = SkinTrimUtils.max_Lab
+
+        minRange = np.asarray(minRange, dtype=np.uint8)
+        maxRange = np.asarray(maxRange, dtype=np.uint8)
+
         skinLab, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageLab, minRange,
                                                                                               maxRange, kernelSize,
                                                                                               iteration)
@@ -174,8 +183,11 @@ class SkinTrimUtils:
         :return:
         """
         if minRange is None: minRange = SkinTrimUtils.min_HSV
+
         if maxRange is None: maxRange = SkinTrimUtils.max_HSV
 
+        minRange = np.asarray(minRange, dtype=np.uint8)
+        maxRange = np.asarray(maxRange, dtype=np.uint8)
         # Get pointer to video frames from primary device
         imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         skinHSV, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageHSV, minRange,
@@ -200,6 +212,10 @@ class SkinTrimUtils:
         """
         if minRange is None: minRange = SkinTrimUtils.min_YCrCb
         if maxRange is None: maxRange = SkinTrimUtils.max_YCrCb
+
+        minRange = np.asarray(minRange, dtype=np.uint8)
+        maxRange = np.asarray(maxRange, dtype=np.uint8)
+
         imageYCrCb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
         skinYCrCb, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageYCrCb,
                                                                                                 minRange, maxRange,

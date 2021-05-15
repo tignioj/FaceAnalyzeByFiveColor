@@ -24,31 +24,55 @@
        <string>对比</string>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="1">
-        <widget class="QLabel" name="label_mask1">
-         <property name="text">
-          <string>Mask1</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QLabel" name="label_after">
-         <property name="text">
-          <string>After</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0">
-        <widget class="QLabel" name="label_before">
+        <widget class="QLabel" name="label_show_before">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
          <property name="text">
           <string>Before</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
        <item row="1" column="0">
-        <widget class="QLabel" name="label_mask2">
+        <widget class="QLabel" name="label_show_mask2">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
          <property name="text">
           <string>Mask2</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLabel" name="label_show_mask1">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string>Mask1</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QLabel" name="label_show_after">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string>After</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -64,7 +88,7 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,1,0">
+          <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,1,1,1">
            <item>
             <widget class="QRadioButton" name="radioButton_melt">
              <property name="text">
@@ -100,13 +124,6 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QRadioButton" name="radioButton_All">
-             <property name="text">
-              <string>All</string>
-             </property>
-            </widget>
-           </item>
           </layout>
          </item>
          <item>
@@ -117,11 +134,14 @@
           </widget>
          </item>
          <item>
-          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0">
-           <item row="2" column="1">
-            <widget class="QLabel" name="label_min2">
+          <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0">
+           <item row="0" column="6">
+            <widget class="QLineEdit" name="lineEdit_option"/>
+           </item>
+           <item row="3" column="3">
+            <widget class="QLabel" name="label_max3">
              <property name="text">
-              <string>min</string>
+              <string>max</string>
              </property>
             </widget>
            </item>
@@ -132,19 +152,128 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="9" rowspan="2">
-            <widget class="QPushButton" name="pushButtonOpenCamera">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
+           <item row="3" column="4">
+            <widget class="QSlider" name="horizontalSlider_max3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_b">
              <property name="text">
-              <string>开启摄像头</string>
+              <string>B</string>
              </property>
-             <property name="flat">
-              <bool>true</bool>
+            </widget>
+           </item>
+           <item row="1" column="5">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>KernelSize[0-50]</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="8" rowspan="4">
+            <widget class="Line" name="line_3">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_c">
+             <property name="text">
+              <string>C</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="2">
+            <widget class="QSlider" name="horizontalSlider_min3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="6">
+            <widget class="QSlider" name="horizontalSlider_iterations">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QSlider" name="horizontalSlider_min2">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="5">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Iterations[0-20]</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="6">
+            <widget class="QSlider" name="horizontalSlider_kernelSize">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_a">
+             <property name="text">
+              <string>A</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="3">
+            <widget class="QLabel" name="label_max2">
+             <property name="text">
+              <string>max</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QLabel" name="label_min2">
+             <property name="text">
+              <string>min</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QSlider" name="horizontalSlider_min1">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLabel" name="label_min3">
+             <property name="text">
+              <string>min</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5">
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Option</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="4">
+            <widget class="QLineEdit" name="lineEdit_maxRange"/>
+           </item>
+           <item row="0" column="2">
+            <widget class="QLineEdit" name="lineEdit_minRange"/>
+           </item>
+           <item row="0" column="3">
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Max</string>
              </property>
             </widget>
            </item>
@@ -162,17 +291,10 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="8" rowspan="4">
-            <widget class="Line" name="line_3">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="6">
-            <widget class="QSlider" name="horizontalSlider_kernelSize">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label">
+             <property name="text">
+              <string>Range</string>
              </property>
             </widget>
            </item>
@@ -183,15 +305,15 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="4">
-            <widget class="QSlider" name="horizontalSlider_max3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+           <item row="1" column="3">
+            <widget class="QLabel" name="label_max1">
+             <property name="text">
+              <string>max</string>
              </property>
             </widget>
            </item>
-           <item row="2" column="9" rowspan="2">
-            <widget class="QPushButton" name="pushButtonpushButtonCloseCamera">
+           <item row="3" column="10">
+            <widget class="QPushButton" name="pushButton_import">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                <horstretch>0</horstretch>
@@ -199,41 +321,26 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>关闭摄像头</string>
+              <string>导入图片</string>
              </property>
              <property name="flat">
               <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="0" column="4">
-            <widget class="QLineEdit" name="lineEdit_maxRange"/>
-           </item>
-           <item row="3" column="3">
-            <widget class="QLabel" name="label_max3">
-             <property name="text">
-              <string>max</string>
+           <item row="3" column="11">
+            <widget class="QPushButton" name="pushButton_reset">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QLabel" name="label_min3">
              <property name="text">
-              <string>min</string>
+              <string>重置参数</string>
              </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_c">
-             <property name="text">
-              <string>C</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QLabel" name="label_max1">
-             <property name="text">
-              <string>max</string>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -244,95 +351,89 @@
              </property>
             </widget>
            </item>
-           <item row="2" column="3">
-            <widget class="QLabel" name="label_max2">
+           <item row="0" column="10">
+            <widget class="QPushButton" name="pushButtonOpenCamera">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
-              <string>max</string>
+              <string>打开相机</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QLabel" name="label_3">
+           <item row="0" column="11">
+            <widget class="QPushButton" name="pushButtonpushButtonCloseCamera">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
-              <string>Max</string>
+              <string>关闭相机</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_b">
+           <item row="2" column="10">
+            <widget class="QPushButton" name="pushButton_save">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text">
-              <string>B</string>
+              <string>保存参数</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="0" column="2">
-            <widget class="QLineEdit" name="lineEdit_minRange"/>
-           </item>
-           <item row="1" column="2">
-            <widget class="QSlider" name="horizontalSlider_min1">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+           <item row="2" column="11">
+            <widget class="QPushButton" name="pushButton_load">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
              </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="label">
              <property name="text">
-              <string>Range</string>
+              <string>读取参数</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="3" column="2">
-            <widget class="QSlider" name="horizontalSlider_min3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QSlider" name="horizontalSlider_min2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_a">
+           <item row="1" column="10">
+            <widget class="QPushButton" name="pushButton_freeze">
              <property name="text">
-              <string>A</string>
+              <string>冻结帧</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
-           <item row="1" column="5">
-            <widget class="QLabel" name="label_4">
+           <item row="1" column="11">
+            <widget class="QPushButton" name="pushButton_continue">
              <property name="text">
-              <string>KernelSize[0-50]</string>
+              <string>恢复帧</string>
+             </property>
+             <property name="flat">
+              <bool>true</bool>
              </property>
             </widget>
-           </item>
-           <item row="2" column="5">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>Iterations[0-20]</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="6">
-            <widget class="QSlider" name="horizontalSlider_iterations">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="5">
-            <widget class="QLabel" name="label_6">
-             <property name="text">
-              <string>Option</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="6">
-            <widget class="QLineEdit" name="lineEdit_option"/>
            </item>
           </layout>
          </item>

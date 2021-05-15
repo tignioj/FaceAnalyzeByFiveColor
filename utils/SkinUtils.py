@@ -46,7 +46,8 @@ class SkinUtils:
         :param img:
         :return:
         """
-        return SkinTrimUtils.rgb_hsv_ycbcr(img)
+        skin, mask1, mask2 = SkinTrimUtils.rgb_hsv_ycbcr(img)
+        return skin
         # return SkinTrimUtils.YCrCb(img)
 
     @staticmethod
@@ -423,8 +424,10 @@ class SkinUtils:
         return FACIAL_LANDMARKS_NAME_DICT[roiKey] + "颜色偏向于:" + ImgUtils.COLOR_SAMPLE_CN_NAME_BY_KEY[color]
 
     @staticmethod
-    def trimSkinRealTime(img, scale):
-        return
+    def trimSkinRealTime(img):
+        skin, mask1, mask2 = SkinTrimUtils.YCrCb(img)
+        # skin, mask1, mask2 = SkinTrimUtils.YCrCb(img)
+        return skin
 
 
 from matplotlib.figure import Figure

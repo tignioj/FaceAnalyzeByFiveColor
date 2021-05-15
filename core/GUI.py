@@ -65,8 +65,6 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.movie_loading = QMovie("../images/face_scanning.gif")
         self.defaultImg = QtGui.QPixmap("../images/process1.png")
         self.img = None
-        self.EdgeTractThrehold1 = 50
-        self.EdgeTractThrehold2 = self.EdgeTractThrehold1 + 200
         self.prevFrameTime = 0
         self.newFrameTime = 0
         # self.videoCapture = cv2.VideoCapture(self.CAMERA_NUMBER, cv2.CAP_DSHOW)
@@ -126,7 +124,9 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.actionOpenCamera.triggered.connect(self.openCamera)
         self.actionCloseCamera.triggered.connect(self.closeCamera)
         self.actionReset.triggered.connect(self.workSpaceReset)
-        self.horizontalSlider_EdgeTract.valueChanged.connect(self.sliderChangeValue)
+        self.horizontalSlider_Speed.setMaximum(12)
+        self.horizontalSlider_Speed.setMinimum(5)
+        self.horizontalSlider_Speed.setValue(8)
 
         # 监听视频模式
         self.radioButton_NormalImage.toggled.connect(self.radioButtonVideoModeChange)
@@ -189,14 +189,15 @@ class MainGUI(QMainWindow, Ui_MainWindow):
             self.labelImageState = self.__IMAGE_LABEL_STATE_NONE
 
         currentFrame = self.image
-
-        # currentFrame = changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        currentFrame = ImgUtils.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
 
         if self.videoMode == self.__VIDEO_MODE_FACE:
-            currentFrame = self.faceDetector.faceDetectRealTime(currentFrame, 4)
+            sp = self.horizontalSlider_Speed.value()
+            currentFrame = self.faceDetector.faceDetectRealTime(currentFrame, sp)
         elif self.videoMode == self.__VIDEO_MODE_SKIN:
             # currentFrame = cv2.Canny(currentFrame, self.EdgeTractThrehold1, self.EdgeTractThrehold2)
-            currentFrame = self.faceDetector.skinDetect(currentFrame, 4)
+            sp = self.horizontalSlider_Speed.value()
+            currentFrame = self.faceDetector.skinDetect(currentFrame, sp)
 
         # 计算FPS
         self.newFrameTime = time.time()
@@ -204,7 +205,6 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.prevFrameTime = self.newFrameTime
         s = str(currentFrame.shape[1]) + "x" + str(currentFrame.shape[0]) + ",FPS:" + re.sub(r'(.*\.\d{2}).*', r'\1',
                                                                                              str(fps))
-
         cv2.putText(currentFrame, s, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
 
         # 将图像转换为pixmap
@@ -414,8 +414,6 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.showInfo("工作区重置成功！")
         self.label_showCamera.setPixmap(self.defaultImg)
 
-    def sliderChangeValue(self):
-        self.EdgeTractThrehold1 = self.horizontalSlider_EdgeTract.value()
 
     # def SaveReport(self):
     #     if self.reports is None:
