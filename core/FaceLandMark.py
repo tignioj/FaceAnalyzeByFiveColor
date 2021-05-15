@@ -64,9 +64,9 @@ class __FaceDetect:
         img = np.array(img_pil)
         return img
 
-    def skinDetect(self, img, scale):
+    def skinDetect(self, img, scale, skinParamDict=None):
         # small_img = cv2.resize(img, (0, 0), fx=1 / scale, fy=1 / scale)
-        frame = SkinUtils.trimSkinRealTime(img)
+        frame = SkinUtils.trimSkinRealTime(img, skinParamDict)
         return frame
 
     def faceDetectRealTime(self, img, scale=1):

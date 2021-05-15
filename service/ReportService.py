@@ -4,6 +4,9 @@ import pdfkit
 from docx import Document
 
 from multiprocessing import Pool
+
+from matplotlib import pyplot as plt
+
 from utils import HistogramTools
 from utils.LogUtils import LogUtils
 from utils.SkinUtils import *

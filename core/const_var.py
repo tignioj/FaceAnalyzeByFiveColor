@@ -1,6 +1,7 @@
 import numpy as np
 
 BASE_PATH = "G:\\PyCharmProgram\\FaceAnalyze"
+SKIN_PARAM_PATH = BASE_PATH + "\\designer\\param.txt"
 OUTPUT_PATH = BASE_PATH + "\\result"
 OPENCV_CASCADE_PATH = "G:\\PyCharmProgram\\FaceDetection\\FaceDetect"
 FONT_PATH = BASE_PATH + "\\fonts\\simsun.ttc"
@@ -37,3 +38,17 @@ FACIAL_LANDMARKS_NAME_DICT = {
     KEY_chun: "唇部",  # 脸颊右
     KEY_ke: "颏"  # 下巴到下唇中间
 }
+
+VIDEO_RGB = "RGB"
+VIDEO_Lab = "Lab"
+VIDEO_HSV = "HSV"
+VIDEO_YCrCb = "YCrCb"
+VIDEO_Melt = "Melt"
+
+KEY_KernelSize = "KernelSize"
+KEY_Iterations = "Iterations"
+KEY_THRESHOLD_RANGE_MIN = "tmin"
+KEY_THRESHOLD_RANGE_MAX = "tmax"
+
+KEY_MIN_RANGE = "range_min"
+KEY_MAX_RANGE = "range_max"

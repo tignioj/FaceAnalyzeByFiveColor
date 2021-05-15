@@ -1,7 +1,9 @@
+import json
 import re
 import time
 
 from core.BackGroundThread import BackendThread
+from designer.SkinDetectImpl import SkinDetectImplGUI
 from utils.ImageUtils import ImgUtils
 import cv2
 import sys
@@ -26,6 +28,9 @@ class MainGUI(QMainWindow, Ui_MainWindow):
 
     __IMAGE_LABEL_STATE_USING_FILE = 2
     "表示正在使用本地图像"
+
+    __IMAGE_LABEL_STATE_USING_SKINTRIMED = 3
+    "表示正在使用皮肤提取后的图像"
 
     "显示图像区域大小"
     __IMAGE_LABEL_SIZE = (1200, 800)
@@ -60,11 +65,15 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.gender = '男'
         self.reports = None
 
+        with open(SKIN_PARAM_PATH, 'r') as paramStr:
+            self.skinParamDict = json.load(paramStr)
+
         # 图像区
         self.videoMode = MainGUI.__VIDEO_MODE_NORMAL  # 定义图像输出模式
         self.movie_loading = QMovie("../images/face_scanning.gif")
         self.defaultImg = QtGui.QPixmap("../images/process1.png")
-        self.img = None
+        self.image = None
+        self.skinImage = None
         self.prevFrameTime = 0
         self.newFrameTime = 0
         # self.videoCapture = cv2.VideoCapture(self.CAMERA_NUMBER, cv2.CAP_DSHOW)
@@ -77,6 +86,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
 
         # 其它页面
         self.reportPage = None
+        self.skinParamPage = None
 
         # 数据初始化
         self.lineEdit_userName.setText("张三")
@@ -119,6 +129,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.button_analyze.clicked.connect(self.analyze)
         # self.button_seeReport.clicked.connect(self.SaveReport)
         self.button_seeReport.clicked.connect(self.seeReport)
+        self.pushButton_skinParamPage.clicked.connect(self.openSkinParamPage)
         self.cameraTimer.timeout.connect(self.showCamera)  # 每次倒计时溢出，调用函数刷新页面
         self.actionOpenImage.triggered.connect(self.openImage)
         self.actionOpenCamera.triggered.connect(self.openCamera)
@@ -141,6 +152,33 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.radioButton_male.gender = '男'
         self.radioButton_female.toggled.connect(self.radioButtonGenderChange)
         self.radioButton_female.gender = '女'
+
+    def openSkinParamPage(self):
+        if self.skinParamPage is None:
+            self.skinParamPage = SkinDetectImplGUI()
+            self.releaseCamera()
+            self.skinParamPage.setBeforeImg(self.image)
+            self.skinParamPage.saveSignal.connect(self.skinParamSaved)
+
+        if self.image is not None:
+            self.radioButton_SkinDetect.click()
+            self.skinParamPage.setBeforeImg(self.image)
+            self.skinParamPage.analyze()
+
+        self.skinParamPage.show()
+
+    def skinParamSaved(self, param):
+        self.skinParamDict = param
+        image = param['img']
+        # 清空图像
+        param['img'] = None
+        self.appendInfo("已加载皮肤参数" + str(param))
+        if image is not None:
+            self.labelImageState = self.__IMAGE_LABEL_STATE_USING_SKINTRIMED
+            self.radioButton_SkinDetect.click()
+            pimg = ImgUtils.nparrayToQPixMap(image, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+            self.skinImage = image
+            self.label_showCamera.setPixmap(pimg)
 
     def seeReport(self):
         if self.reports is None:
@@ -189,7 +227,8 @@ class MainGUI(QMainWindow, Ui_MainWindow):
             self.labelImageState = self.__IMAGE_LABEL_STATE_NONE
 
         currentFrame = self.image
-        currentFrame = ImgUtils.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        currentFrame = ImgUtils.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
+                                                                self.__IMAGE_LABEL_SIZE[1])
 
         if self.videoMode == self.__VIDEO_MODE_FACE:
             sp = self.horizontalSlider_Speed.value()
@@ -197,7 +236,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         elif self.videoMode == self.__VIDEO_MODE_SKIN:
             # currentFrame = cv2.Canny(currentFrame, self.EdgeTractThrehold1, self.EdgeTractThrehold2)
             sp = self.horizontalSlider_Speed.value()
-            currentFrame = self.faceDetector.skinDetect(currentFrame, sp)
+            currentFrame = self.faceDetector.skinDetect(currentFrame, sp, self.skinParamDict)
 
         # 计算FPS
         self.newFrameTime = time.time()
@@ -252,7 +291,8 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         if type(res) is FaceNotFoundException:
             self.showloadingGIF(False)
 
-            self.label_showCamera.setPixmap(ImgUtils.nparrayToQPixMap(res.expression, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]))
+            self.label_showCamera.setPixmap(
+                ImgUtils.nparrayToQPixMap(res.expression, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]))
             self.showError("未能识别到面孔！请重置工作区再试试看。" + str(res.message))
             return
 
@@ -326,8 +366,6 @@ class MainGUI(QMainWindow, Ui_MainWindow):
                 LogUtils.error("GUI", "未知错误:", e)
 
         elif self.labelImageState == self.__IMAGE_LABEL_STATE_USING_FILE:
-            self.labelImageState = self.__IMAGE_LABEL_STATE_NONE
-
             LogUtils.log("GUI", "使用图片检测中...", self.image.shape)
 
             # faseDetect过程比较长，需要多线程执行, 加载过渡动画动画
@@ -336,6 +374,20 @@ class MainGUI(QMainWindow, Ui_MainWindow):
             LogUtils.log("GUI", "发起后台线程...", self.image.shape)
             BackendThread.InnerThread(self, BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
                                       {'image': self.image, 'name': userName, 'gender': gender},
+                                      progressFun=self.handleReportText
+                                      ).start()
+
+            LogUtils.log("GUI", "后台已经发起请求", userName + "," + gender)
+            #  开启后台线程检测
+        elif self.labelImageState == self.__IMAGE_LABEL_STATE_USING_SKINTRIMED:
+            LogUtils.log("GUI", "使用提纯后的图片图片检测中...", self.skinImage.shape)
+
+            # faseDetect过程比较长，需要多线程执行, 加载过渡动画动画
+            self.showInfo("正在为您诊断，请耐心等待...")
+            self.showloadingGIF(True)
+            LogUtils.log("GUI", "发起后台线程...", self.skinImage.shape)
+            BackendThread.InnerThread(self, BackendThread.faceDetectInBackground, self.handleFaceDetectResult,
+                                      {'image': self.skinImage, 'name': userName, 'gender': gender},
                                       progressFun=self.handleReportText
                                       ).start()
 
@@ -395,7 +447,6 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.label_showCamera.setPixmap(qpixMap)
         self.labelImageState = MainGUI.__IMAGE_LABEL_STATE_USING_FILE
 
-
     def workSpaceReset(self):
         self.progressBar.setValue(0)
         self.releaseCamera()
@@ -413,7 +464,6 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.button_analyze.setEnabled(True)
         self.showInfo("工作区重置成功！")
         self.label_showCamera.setPixmap(self.defaultImg)
-
 
     # def SaveReport(self):
     #     if self.reports is None:

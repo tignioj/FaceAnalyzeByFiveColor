@@ -1,6 +1,8 @@
 import threading
 import time
 
+from matplotlib import pyplot as plt
+
 from utils.ImageUtils import ImgUtils
 from core.const_var import *
 from core.const_var import FACIAL_LANDMARKS_NAME_DICT
@@ -10,7 +12,7 @@ import cv2
 # 官方地址 https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.hist.html
 # 颜色空间的有关问题：http://poynton.ca/notes/colour_and_gamma/ColorFAQ.html
 from utils.LogUtils import LogUtils
-from utils.SkinTrimUtlis import *
+from utils.SkinTrimUtlis import SkinTrimUtils
 from core.const_var import COLORDICT
 
 COLOR_MODE_RGB = 0
@@ -424,9 +426,11 @@ class SkinUtils:
         return FACIAL_LANDMARKS_NAME_DICT[roiKey] + "颜色偏向于:" + ImgUtils.COLOR_SAMPLE_CN_NAME_BY_KEY[color]
 
     @staticmethod
-    def trimSkinRealTime(img):
-        skin, mask1, mask2 = SkinTrimUtils.YCrCb(img)
-        # skin, mask1, mask2 = SkinTrimUtils.YCrCb(img)
+    def trimSkinRealTime(img, skinParamDict=None):
+        if skinParamDict is not None:
+            skin, mask1, mask2 = SkinTrimUtils.trimByParam(img, skinParamDict)
+        else:
+            skin, mask1, mask2 = SkinTrimUtils.YCrCb(img)
         return skin
 
 

@@ -26,6 +26,8 @@ import cv2
 import imutils
 import numpy as np
 import matplotlib.pyplot as plt
+
+from core.const_var import VIDEO_YCrCb, VIDEO_Lab, VIDEO_Melt, VIDEO_RGB, VIDEO_HSV
 from utils.hsv_rgb_ycrcb import Skin_Detect
 
 
@@ -194,6 +196,50 @@ class SkinTrimUtils:
                                                                                               maxRange, kernelSize,
                                                                                               iteration)
         return skinHSV, skinMaskRange, skinMaskAfter
+
+    @staticmethod
+    def trimByParam(img, skinParamDict):
+        mode = skinParamDict['currentMode']
+        paramDict = skinParamDict['paramDict']
+        param = paramDict[mode]
+        if mode == VIDEO_RGB:
+            skin, mask1, mask2 = SkinTrimUtils.rgb(img,
+                                     minRange=param['tmin'],
+                                     maxRange=param['tmax'],
+                                     kernelSize=param['KernelSize'],
+                                     iteration=param['Iterations']
+                                     )
+        elif mode == VIDEO_HSV:
+            skin, mask1, mask2 = SkinTrimUtils.hsv(img,
+                                     minRange=param['tmin'],
+                                     maxRange=param['tmax'],
+                                     kernelSize=param['KernelSize'],
+                                     iteration=param['Iterations']
+                                     )
+
+        elif mode == VIDEO_Lab:
+            skin, mask1, mask2 = SkinTrimUtils.Lab(img,
+                                     minRange=param['tmin'],
+                                     maxRange=param['tmax'],
+                                     kernelSize=param['KernelSize'],
+                                     iteration=param['Iterations']
+                                     )
+        elif mode == VIDEO_YCrCb:
+            skin, mask1, mask2 = SkinTrimUtils.YCrCb(img,
+                                       minRange=param['tmin'],
+                                       maxRange=param['tmax'],
+                                       kernelSize=param['KernelSize'],
+                                       iteration=param['Iterations']
+                                       )
+        elif mode == VIDEO_Melt:
+            skin, mask1, mask2 = SkinTrimUtils.rgb_hsv_ycbcr(img,
+                                               kernelSize=param['KernelSize'],
+                                               iteration=param['Iterations']
+                                               )
+        else:
+            raise Exception("没有指定模式！或者模式不存在")
+
+        return skin, mask1, mask2
 
     @staticmethod
     def YCrCb(image, minRange=None, maxRange=None, kernelSize=None, iteration=None):
