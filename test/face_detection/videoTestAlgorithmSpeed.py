@@ -3,7 +3,6 @@ import re
 import cv2
 # from face_detect_mtcnn import faceDetect as faceDetectCNN
 from face_detect_dlib_hog import faceDetect as faceDetectHog
-from face_detect_reg import faceDetect as faceDetectReg
 import time
 
 scale = 6
