@@ -38,7 +38,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.label_showCamera = QtWidgets.QLabel(self.groupBox)
         self.label_showCamera.setText("")
-        self.label_showCamera.setPixmap(QtGui.QPixmap("../images/process1.png"))
+        self.label_showCamera.setPixmap(QtGui.QPixmap("../images/process2.png"))
         self.label_showCamera.setScaledContents(False)
         self.label_showCamera.setAlignment(QtCore.Qt.AlignCenter)
         self.label_showCamera.setObjectName("label_showCamera")

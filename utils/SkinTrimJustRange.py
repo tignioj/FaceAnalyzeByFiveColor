@@ -28,10 +28,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from core.const_var import VIDEO_YCrCb, VIDEO_Lab, VIDEO_Melt, VIDEO_RGB, VIDEO_HSV
+from utils.ImageUtils import ImgUtils
 from utils.hsv_rgb_ycrcb import Skin_Detect
 
 
-class SkinTrimUtils:
+class SkinTrimUtilsForThesis:
     _sd = Skin_Detect()
 
     @staticmethod
@@ -44,9 +45,9 @@ class SkinTrimUtils:
         :return:
         """
         skinMaskRange = cv2.inRange(colorSpaceImg, min, max)
-        skinMaskAfter = SkinTrimUtils._getMask(skinMaskRange, kernelSize, iteration)
-        skin = cv2.bitwise_and(srcImg, srcImg, mask=skinMaskAfter)
-        return skin, skinMaskRange, skinMaskAfter
+        # skinMaskAfter = SkinTrimUtilsForThesis._getMask(skinMaskRange, kernelSize, iteration)
+        skin = cv2.bitwise_and(srcImg, srcImg, mask=skinMaskRange)
+        return skin, skinMaskRange, None
 
     @staticmethod
     def rgb_hsv_ycbcr(image, kernelSize=11, iteration=2):
@@ -59,12 +60,13 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        skinMaskRange = SkinTrimUtils._sd.RGB_H_CbCr(image, False)
+        skinMaskRange = SkinTrimUtilsForThesis._sd.RGB_H_CbCr(image, False)
         skinMaskRange = skinMaskRange.astype(np.uint8)
         skinMaskRange *= 255
-        skinMaskAfter = SkinTrimUtils._getMask(skinMaskRange, kernelSize, iteration)
-        skin = cv2.bitwise_and(image, image, mask=skinMaskAfter)
-        return skin, skinMaskRange, skinMaskAfter
+        # skinMaskAfter = SkinTrimUtilsForThesis._getMask(skinMaskRange, kernelSize, iteration)
+        # skin = cv2.bitwise_and(image, image, mask=skinMaskAfter)
+        skin = cv2.bitwise_and(image, image, mask=skinMaskRange)
+        return skin, skinMaskRange
 
 
 
@@ -121,12 +123,12 @@ class SkinTrimUtils:
         :param img:
         :return:
         """
-        if minRange is None: minRange = SkinTrimUtils.min_rgb
-        if maxRange is None: maxRange = SkinTrimUtils.max_rgb
+        if minRange is None: minRange = SkinTrimUtilsForThesis.min_rgb
+        if maxRange is None: maxRange = SkinTrimUtilsForThesis.max_rgb
 
         minRange = np.asarray(minRange, dtype=np.uint8)
         maxRange = np.asarray(maxRange, dtype=np.uint8)
-        skinRGB, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, image, minRange,
+        skinRGB, skinMaskRange, skinMaskAfter = SkinTrimUtilsForThesis._maskAndErodeAndDilateAndSmooth(image, image, minRange,
                                                                                               maxRange, kernelSize,
                                                                                               iteration)
         # return np.hstack([image, skinRGB])
@@ -144,21 +146,19 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-
         # min_Lab = np.array([127, 128, 0], np.uint8)
         # max_Lab = np.array([158, 143, 255], np.uint8)
 
         imageLab = cv2.cvtColor(image, cv2.COLOR_BGR2Lab)
-        if minRange is None: minRange = SkinTrimUtils.min_Lab
-        if maxRange is None: maxRange = SkinTrimUtils.max_Lab
+        if minRange is None: minRange = SkinTrimUtilsForThesis.min_Lab
+        if maxRange is None: maxRange = SkinTrimUtilsForThesis.max_Lab
 
         minRange = np.asarray(minRange, dtype=np.uint8)
         maxRange = np.asarray(maxRange, dtype=np.uint8)
 
-        skinLab, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageLab, minRange,
+        skinLab, skinMaskRange, skinMaskAfter = SkinTrimUtilsForThesis._maskAndErodeAndDilateAndSmooth(image, imageLab, minRange,
                                                                                               maxRange, kernelSize,
                                                                                               iteration)
-
         # return np.hstack([image, skinLab])
         return skinLab, skinMaskRange, skinMaskAfter
 
@@ -188,15 +188,15 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        if minRange is None: minRange = SkinTrimUtils.min_HSV
+        if minRange is None: minRange = SkinTrimUtilsForThesis.min_HSV
 
-        if maxRange is None: maxRange = SkinTrimUtils.max_HSV
+        if maxRange is None: maxRange = SkinTrimUtilsForThesis.max_HSV
 
         minRange = np.asarray(minRange, dtype=np.uint8)
         maxRange = np.asarray(maxRange, dtype=np.uint8)
         # Get pointer to video frames from primary device
         imageHSV = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        skinHSV, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageHSV, minRange,
+        skinHSV, skinMaskRange, skinMaskAfter = SkinTrimUtilsForThesis._maskAndErodeAndDilateAndSmooth(image, imageHSV, minRange,
                                                                                               maxRange, kernelSize,
                                                                                               iteration)
         return skinHSV, skinMaskRange, skinMaskAfter
@@ -207,14 +207,14 @@ class SkinTrimUtils:
         paramDict = skinParamDict['paramDict']
         param = paramDict[mode]
         if mode == VIDEO_RGB:
-            skin, mask1, mask2 = SkinTrimUtils.rgb(img,
+            skin, mask1, mask2 = SkinTrimUtilsForThesis.rgb(img,
                                                    minRange=param['tmin'],
                                                    maxRange=param['tmax'],
                                                    kernelSize=param['KernelSize'],
                                                    iteration=param['Iterations']
                                                    )
         elif mode == VIDEO_HSV:
-            skin, mask1, mask2 = SkinTrimUtils.hsv(img,
+            skin, mask1, mask2 = SkinTrimUtilsForThesis.hsv(img,
                                                    minRange=param['tmin'],
                                                    maxRange=param['tmax'],
                                                    kernelSize=param['KernelSize'],
@@ -222,21 +222,21 @@ class SkinTrimUtils:
                                                    )
 
         elif mode == VIDEO_Lab:
-            skin, mask1, mask2 = SkinTrimUtils.Lab(img,
+            skin, mask1, mask2 = SkinTrimUtilsForThesis.Lab(img,
                                                    minRange=param['tmin'],
                                                    maxRange=param['tmax'],
                                                    kernelSize=param['KernelSize'],
                                                    iteration=param['Iterations']
                                                    )
         elif mode == VIDEO_YCrCb:
-            skin, mask1, mask2 = SkinTrimUtils.YCrCb(img,
+            skin, mask1, mask2 = SkinTrimUtilsForThesis.YCrCb(img,
                                                      minRange=param['tmin'],
                                                      maxRange=param['tmax'],
                                                      kernelSize=param['KernelSize'],
                                                      iteration=param['Iterations']
                                                      )
         elif mode == VIDEO_Melt:
-            skin, mask1, mask2 = SkinTrimUtils.rgb_hsv_ycbcr(img,
+            skin, mask1, mask2 = SkinTrimUtilsForThesis.rgb_hsv_ycbcr(img,
                                                              kernelSize=param['KernelSize'],
                                                              iteration=param['Iterations']
                                                              )
@@ -260,14 +260,14 @@ class SkinTrimUtils:
         :param image:
         :return:
         """
-        if minRange is None: minRange = SkinTrimUtils.min_YCrCb
-        if maxRange is None: maxRange = SkinTrimUtils.max_YCrCb
+        if minRange is None: minRange = SkinTrimUtilsForThesis.min_YCrCb
+        if maxRange is None: maxRange = SkinTrimUtilsForThesis.max_YCrCb
 
         minRange = np.asarray(minRange, dtype=np.uint8)
         maxRange = np.asarray(maxRange, dtype=np.uint8)
 
         imageYCrCb = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
-        skinYCrCb, skinMaskRange, skinMaskAfter = SkinTrimUtils._maskAndErodeAndDilateAndSmooth(image, imageYCrCb,
+        skinYCrCb, skinMaskRange, skinMaskAfter = SkinTrimUtilsForThesis._maskAndErodeAndDilateAndSmooth(image, imageYCrCb,
                                                                                                 minRange, maxRange,
                                                                                                 kernelSize,
                                                                                                 iteration)
@@ -285,11 +285,11 @@ def testVideo():
         frame = imutils.resize(frame, width=800)
         iteration = 0
         blur = (0, 0)
-        cv2.imshow('rgb', SkinTrimUtils.rgb(frame))
-        cv2.imshow('hsv', SkinTrimUtils.hsv(frame))
-        cv2.imshow('yCrCb', SkinTrimUtils.YCrCb(frame))
-        cv2.imshow('lab', SkinTrimUtils.Lab(frame))
-        cv2.imshow('rgb_hsv_ycbcr', SkinTrimUtils.rgb_hsv_ycbcr(frame))
+        cv2.imshow('rgb', SkinTrimUtilsForThesis.rgb(frame))
+        cv2.imshow('hsv', SkinTrimUtilsForThesis.hsv(frame))
+        cv2.imshow('yCrCb', SkinTrimUtilsForThesis.YCrCb(frame))
+        cv2.imshow('lab', SkinTrimUtilsForThesis.Lab(frame))
+        cv2.imshow('rgb_hsv_ycbcr', SkinTrimUtilsForThesis.rgb_hsv_ycbcr(frame))
         # cv2.imshow('melt', melt(frame))
 
         # Hit 'q' on the keyboard to quit!
@@ -302,7 +302,10 @@ def testVideo():
 
 def testImage():
     def showImg(title, skin):
+        cv2.putText(skin[0], title, (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), cv2.LINE_4)
+        cv2.putText(skin[1], title, (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), cv2.LINE_4)
         cv2.imshow(title + "skin", skin[0])
+
         cv2.imshow(title + " range mask", skin[1])
 
     # frame = cv2.imread("../faces/7.jpeg")
@@ -310,15 +313,56 @@ def testImage():
     frame = imutils.resize(frame, width=300)
     # np.ones((5, 5), np.uint8)
     cv2.imshow("src", frame)
-    showImg("rgb", SkinTrimUtils.rgb(frame.copy()))
-    showImg("lab", SkinTrimUtils.Lab(frame.copy()))
-    showImg("ycrcb", SkinTrimUtils.YCrCb(frame.copy()))
-    showImg("hsv", SkinTrimUtils.hsv(frame.copy()))
-    showImg("melt", SkinTrimUtils.rgb_hsv_ycbcr(frame.copy()))
-    # SkinTrimUtils.hsv(frame.copy()))
-    # cv2.imshow('yCrCb', SkinTrimUtils.YCrCb(frame.copy()))
-    # cv2.imshow('lab result', SkinTrimUtils.Lab(frame.copy()))
-    # cv2.imshow('rgb_hsv_ycbcr', SkinTrimUtils.rgb_hsv_ycbcr(frame.copy()))
+    showImg("rgb", SkinTrimUtilsForThesis.rgb(frame.copy()))
+    # showImg("lab", SkinTrimUtilsForThesis.Lab(frame.copy()))
+    # showImg("ycrcb", SkinTrimUtilsForThesis.YCrCb(frame.copy()))
+    # showImg("hsv", SkinTrimUtilsForThesis.hsv(frame.copy()))
+    # showImg("melt", SkinTrimUtilsForThesis.rgb_hsv_ycbcr(frame.copy()))
+    # SkinTrimUtilsForThesis.hsv(frame.copy()))
+    # cv2.imshow('yCrCb', SkinTrimUtilsForThesis.YCrCb(frame.copy()))
+    # cv2.imshow('lab result', SkinTrimUtilsForThesis.Lab(frame.copy()))
+    # cv2.imshow('rgb_hsv_ycbcr', SkinTrimUtilsForThesis.rgb_hsv_ycbcr(frame.copy()))
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def testErope():
+    kernelSize = 3
+    iterations = 3
+    erosion = cv2.imread("../theory/Erosion/Erosion_src.png")
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernelSize, kernelSize))
+    afterErosion = cv2.erode(erosion, kernel, iterations=iterations)
+    # skinMask = cv2.dilate(skinMask, kernel, iterations=iterations)
+    cv2.imshow("src", erosion)
+    cv2.imshow("erosion", afterErosion)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def testDilation():
+    kernelSize = 3
+    iterations = 3
+    dilate = cv2.imread("../theory/Erosion/Erosion_after.png")
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernelSize, kernelSize))
+    afterDilation = cv2.dilate(dilate, kernel, iterations=iterations)
+    # skinMask = cv2.dilate(skinMask, kernel, iterations=iterations)
+    cv2.imshow("src", dilate)
+    cv2.imshow("dilate", afterDilation)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def testErosionAndDilation():
+    kernelSize = 5
+    iterations = 3
+    imgMask = cv2.imread("../theory/ErosionAndDliation/FaceMaskSrc.png")
+
+    cv2.imshow("src", imgMask)
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernelSize, kernelSize))
+
+    afterErosion = cv2.erode(imgMask, kernel, iterations=iterations)
+    cv2.imshow("erosion", afterErosion)
+    afterDilation = cv2.dilate(afterErosion, kernel, iterations=iterations)
+    cv2.imshow("dilation", afterDilation)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
@@ -326,3 +370,6 @@ def testImage():
 if __name__ == '__main__':
     # testVideo()
     testImage()
+    # testErope()
+    # testDilation()
+    # testErosionAndDilation()

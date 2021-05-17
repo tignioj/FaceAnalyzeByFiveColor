@@ -1,7 +1,7 @@
 import numpy as np
 
 BASE_PATH = "G:\\PyCharmProgram\\FaceAnalyze"
-SKIN_PARAM_PATH = BASE_PATH + "\\designer\\param.txt"
+SKIN_PARAM_PATH = BASE_PATH + "\\designer\\param.json"
 OUTPUT_PATH = BASE_PATH + "\\result"
 OPENCV_CASCADE_PATH = "G:\\PyCharmProgram\\FaceDetection\\FaceDetect"
 FONT_PATH = BASE_PATH + "\\fonts\\simsun.ttc"

@@ -147,6 +147,10 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         return self.paramDict
 
     def releaseCamera(self):
+        """
+        静默关闭相机，不会有任何输出到GUI
+        :return:
+        """
         LogUtils.log("GUI", "尝试释放相机")
         if self.cameraTimerBefore.isActive():
             self.cameraTimerBefore.stop()
@@ -158,8 +162,8 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.videoCapture.release()
         LogUtils.log("GUI", "成功关闭摄像头")
 
-        self.label_show_before.clear()
-        self.label_show_after.clear()
+        # self.label_show_before.clear()
+        # self.label_show_after.clear()
 
     def closeCamera(self):
         LogUtils.log("GUI", "尝试关闭相机")
@@ -203,7 +207,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
             saveDict['img'] = self.label_show_after.srcImg
         else:
             saveDict['img'] = None
-
+        self.releaseCamera()
         self.saveSignal.emit(saveDict)
 
     def loadParam(self):
@@ -258,6 +262,8 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.pushButton_load.clicked.connect(self.loadParam)
         self.pushButton_reset.clicked.connect(self.resetParam)
         self.pushButton_import.clicked.connect(self.openFile)
+        self.pushButton_freeze.clicked.connect(self.closeCamera)
+        self.pushButton_continue.clicked.connect(self.openCamera)
 
         # ===================== 设置 Radio Button ==========================
         self.radioButton_melt.colorMode = VIDEO_Melt
@@ -462,6 +468,20 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.label_show_before.setPixmap(showImage)
         self.label_show_before.setLargePixMap(showImage)
 
+    def closeEvent(self, event):
+        save = QMessageBox.question(self,
+                                               "提示",
+                                               "保存当前参数吗？",
+                                               QMessageBox.Yes | QMessageBox.No)
+        if save == QMessageBox.Yes:
+            self.saveParam()
+        else:
+            pass
+            # event.ignore()
+
+        self.releaseCamera()
+        event.accept()
+
     def readCamera(self):
         flag, currentFrame = self.videoCapture.read()
         if not flag:
@@ -470,7 +490,11 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
             if self.cameraTimerAfter.isActive():
                 self.cameraTimerAfter.stop()
             self.appendError("相机未能成功读取到数据")
-            self.releaseCamera()
+            errImg = np.ones([self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]])
+            cv2.putText(errImg, "无法读取相机数据", (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), cv2.LINE_4)
+            return errImg
+            # self.releaseCamera()
+
         else:
             return currentFrame
 

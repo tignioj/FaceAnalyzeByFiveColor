@@ -1,6 +1,7 @@
 import threading
 import time
 
+import imutils
 from matplotlib import pyplot as plt
 
 from utils.ImageUtils import ImgUtils
@@ -180,7 +181,7 @@ class SkinUtils:
         ax.hist(b.ravel(), bins=bbins, range=brange, alpha=.7, label=label[1], color=color[1])
         ax.hist(c.ravel(), bins=cbins, range=crange, alpha=.7, label=label[2], color=color[2])
         ax.set_title(title)
-        ax.legend()
+        ax.legend(loc="best")
 
         ax1 = plt.subplot2grid((3, 3), (0, 2), colspan=1, rowspan=1)
         ax1.hist(a.ravel(), bins=abins, range=arange, alpha=.7, label=label[0], color=color[0])
@@ -205,7 +206,7 @@ class SkinUtils:
             ax.scatter(a, b, alpha=0.5, c='lightblue', label="white")
             a, b, c = sp(img)
             ax.scatter(a, b, alpha=0.3, c='green', label=roiName, marker='^')
-            ax.legend()
+            ax.legend(loc="best")
 
         redSample, yellowSample, blackSample, whiteSample = \
             SkinUtils.getFourColorSampleByROINameAndColorSpace(roiName, sampleDict, colorspace)
@@ -214,7 +215,6 @@ class SkinUtils:
         scatterSample(ax4)
         ax4.set_xlabel(label[channelA])
         ax4.set_ylabel(label[channelB])
-
         plt.show()
 
     @staticmethod
@@ -226,6 +226,7 @@ class SkinUtils:
         """
         # fig = plt.figure(figsize=(12, 8))  # 画布大小
         # img = SkinUtils.trimSkin(img)
+        img =imutils.resize(img, width=40)
         if colormode == COLOR_MODE_RGB:
             SkinUtils.show_histogram(img, "RGB", 0, 1, 2, ('b', 'g', 'r'), ['b', 'g', 'r'], roiName, sampleDict,
                                      colormode)
@@ -243,8 +244,8 @@ class SkinUtils:
                                      colormode)
         else:
             raise HistogramException("SkinUtils, 没有指定颜色空间！")
-        # plt.legend()
-        # fig.tight_layout()
+        fig.tight_layout()
+        # plt.legend(loc="best")
         return ImgUtils.getcvImgFromFigure(fig)
 
     @staticmethod
@@ -272,7 +273,6 @@ class SkinUtils:
             SkinUtils.showScatter(img, 1, 2, "Cr", "Cb", roiName, sampleDict, colormode)
         else:
             pass
-        # plt.legend()
         return ImgUtils.getcvImgFromFigure(fig)
 
     @staticmethod
@@ -427,6 +427,8 @@ class SkinUtils:
 
     @staticmethod
     def trimSkinRealTime(img, skinParamDict=None):
+        if img is None:
+            return
         if skinParamDict is not None:
             skin, mask1, mask2 = SkinTrimUtils.trimByParam(img, skinParamDict)
         else:
@@ -505,6 +507,7 @@ def _testHist():
     cv2.imshow("YCrCb", result3)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
 
 
 def _testScatter():

@@ -9,7 +9,6 @@ from utils.LogUtils import LogUtils
 负责封装和处理ROI
 """
 
-
 class ROIService:
     def analyzeROI(self):
         pass
@@ -59,6 +58,7 @@ class ROIService:
         return face.bottom() - face.top(), face.right() - face.left()
 
     def getROIRealTime(self, name, shape, image, face, scale=1):
+        """用于实时显示"""
         pts = []
         center_point = ()
         faceW, faceH = self._getFaceWH(face)
@@ -124,7 +124,6 @@ class ROIService:
         else:
             print("unknown name:", name)
 
-        # extract the ROI of the face region as a separate image
         # 提取点的矩形
         roiEntity = ROIEntity()
         # (1. ROI名字
@@ -132,12 +131,6 @@ class ROIService:
         roiEntity.nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
         roiEntity.centerPoint = scale * np.array(center_point)
         roiEntity.roiRectanglePoints = scale * np.array(pts)
-        # (x, y, w, h) = cv2.boundingRect(roiEntity.roiRectanglePoints)
-        # LogUtils.log("RoiService", (x, y, w, h))
-        # roi = image[y:y + h, x:x + w]
-        # LogUtils.log("RoiService", roi.shape, image.shape)
-        # roiEntity.img = roi
-        # roiEntity.imgOnlySkin = SkinUtils.SkinUtils.trimSkin(roi)
         return roiEntity
 
     # 获取ROI
@@ -216,13 +209,8 @@ class ROIService:
         roiEntity.centerPoint = scale * np.array(center_point)
         roiEntity.roiRectanglePoints = scale * np.array(pts)
         (x, y, w, h) = cv2.boundingRect(roiEntity.roiRectanglePoints)
-        # LogUtils.log("RoiService", (x, y, w, h))
         roi = image[y:y + h, x:x + w]
-        # if (y < 0):
-        #     print("y:" + str(y) + "->" + str(y + h) + ", x:" + str(x) + "->" + str(x + w))
-        # LogUtils.log("RoiService", roi.shape, image.shape)
         roiEntity.img = roi
-
         roiEntity.imgOnlySkin = SkinUtils.SkinUtils.trimSkin(roi)
 
         return roiEntity

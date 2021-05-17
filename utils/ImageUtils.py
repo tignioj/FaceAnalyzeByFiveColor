@@ -9,9 +9,10 @@ from utils.LogUtils import LogUtils
 
 class ImgUtils:
     @staticmethod
-    def getImg(path, width=200, height=200):
+    def getImg(path, width=50, height=50):
         img = cv2.imread(path)
-        return imutils.resize(img, width, height)
+        return img
+        # return imutils.resize(img, width, height)
 
     @staticmethod
     def keepSameShape(img1, img2, width=None, height=None):
@@ -29,7 +30,7 @@ class ImgUtils:
     KEY_SAMPLE_RED = "chi"
     KEY_SAMPLE_BLACK = "black"
     KEY_SAMPLE_WHITE = "white"
-    SAMPLE_PATH = "../four_color_face_sample"
+    SAMPLE_PATH = BASE_PATH + "\\four_color_face_sample"
 
     COLOR_SAMPLE_CN_NAME_BY_KEY = {
         KEY_SAMPLE_WHITE: '白',

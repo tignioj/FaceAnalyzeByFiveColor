@@ -1,5 +1,7 @@
 import os.path
 
+import imutils
+
 from core.const_var import *
 from core.FaceLandMark import faceDetection
 import cv2
@@ -35,6 +37,9 @@ def segROIAndSave(name, img):
     rois = faceEntity.landMarkROIDict
 
     for (name, roi) in rois.items():
+        roi.img = imutils.resize(roi.img, width=50)
+        roi.imgOnlySkin= imutils.resize(roi.imgOnlySkin, width=50)
+        print(roi)
         cv2.imwrite(roiPATH + "\\" + roi.roiName + ".jpg", roi.img)
         cv2.imwrite(roiPATH + "\\" + roi.roiName + "_trim.jpg", roi.imgOnlySkin)
 

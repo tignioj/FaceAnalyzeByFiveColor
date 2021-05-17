@@ -162,14 +162,15 @@ class ReportService:
         nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
         LogUtils.log("ReportService", "正在绘制" + nameCN + "的颜色空间分布曲线")
         nameCN = FACIAL_LANDMARKS_NAME_DICT[roi.roiName]
+        predictImg = roi.img
 
-        rgbDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_RGB, sampleDict)
+        rgbDict = ReportService.long_time_task(name, predictImg, COLOR_MODE_RGB, sampleDict)
 
-        hsvDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_HSV, sampleDict)
+        hsvDict = ReportService.long_time_task(name, predictImg, COLOR_MODE_HSV, sampleDict)
 
-        LabDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_Lab, sampleDict)
+        LabDict = ReportService.long_time_task(name, predictImg, COLOR_MODE_Lab, sampleDict)
 
-        YCrCbDict = ReportService.long_time_task(name, roi.img, COLOR_MODE_YCrCb, sampleDict)
+        YCrCbDict = ReportService.long_time_task(name, predictImg, COLOR_MODE_YCrCb, sampleDict)
 
         LogUtils.log("ReportService", "查询" + nameCN + "的肤色中...")
 

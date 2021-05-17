@@ -66,7 +66,8 @@ class HistogramTools:
         barwidth = 0.12
         bias = position * barwidth
         x1 = np.asarray(list(range(len(x)))) + bias  # [0,1,2,3]
-        y1 = HistogramTools._getProbability(array)
+        # y1 = HistogramTools._getProbability(array)
+        y1 = array
         plt.rcParams['font.sans-serif'] = ['SimHei']
         # 设置x轴刻度
         plt.xticks(x1, x)
@@ -133,7 +134,7 @@ class HistogramTools:
                                                   sample_red=sampleRedTrim,
                                                   sample_white=sampleWhiteTrim)
 
-        LogUtils.log("HistogramTools", keyNameCN + "距离数组：",   distanceDict)
+        LogUtils.log("HistogramTools", keyNameCN + "距离数组：", distanceDict)
         # 2.2 获取melts算法的距离
         # melts = distanceDict["melt"][0]
         # melt_color = distanceDict["melt"][1]
@@ -210,10 +211,10 @@ class HistogramTools:
         :param arr:
         :return:
         """
-        return HistogramTools.most_common(arr)
+        return HistogramTools.getMostCommenWord(arr)
 
     @staticmethod
-    def most_common(L):
+    def getMostCommenWord(L):
         # get an iterable of (item, iterable) pairs
         SL = sorted((x, i) for i, x in enumerate(L))
         # print 'SL:', SL

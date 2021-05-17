@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict
 
 import imutils
@@ -70,6 +71,12 @@ class __FaceDetect:
         return frame
 
     def faceDetectRealTime(self, img, scale=1):
+        """
+        用于相机实时显示
+        :param img:
+        :param scale:
+        :return:
+        """
         self.__scale = scale
         copy = img.copy()
         small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
@@ -78,7 +85,6 @@ class __FaceDetect:
         # return small_img
         # 6. 人脸检测
         faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
-        print(len(faces))
         # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
         for (i, face) in enumerate(faces):
             shape = self._predictor(small_img, face)
@@ -99,31 +105,43 @@ class __FaceDetect:
                           (face.right() * scale, face.bottom() * scale), (255, 0, 0), 4, cv2.LINE_AA)
         return copy
 
-    # def faceDetectRealTime(self, img, scale=1):
-    #     self.__scale = scale
-    #     copy = img.copy()
-    #     small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
-    #     # 6. 人脸检测
-    #     faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
-    #     # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
-    #     for (i, face) in enumerate(faces):
-    #         shape = self._predictor(small_img, face)
-    #         shape = self._shape_to_np(shape)
-    #         for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
-    #             # LogUtils.log("FaceLandMark", "提取ROI..., 图像是否为空:" + str(len(img)))
-    #             roiEntity = self.__ROIService.getROIRealTime(nameKey, shape, img, face, scale)
-    #             # 根据点画出折线
-    #             path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
-    #             cv2.polylines(copy, path, True, (0, 255, 0), 4)
-    #             # 加上中文文字: 这个方法特别卡！
-    #             # copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
-    #             # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
-    #             # roi = imutils.resize(roiEntity.img, width=200, inter=cv2.INTER_CUBIC)
-    #             # cv2.imshow(nameKey, roiEntity.img)
-    #         # 画出人脸矩形
-    #         cv2.rectangle(copy, (face.left() * scale, face.top() * scale),
-    #                       (face.right() * scale, face.bottom() * scale), (255, 0, 0), 4, cv2.LINE_AA)
-    #     return copy
+    def faceDetectForOneImage(self, img, scale=4):
+        """
+        用于单张图片单次显示
+        :param img:
+        :param scale:
+        :return:
+        """
+        if img is None:
+            return
+        self.__scale = scale
+        copy = img.copy()
+        small_img = cv2.resize(copy, (0, 0), fx=1 / scale, fy=1 / scale)
+        # small_img = imutils.resize(img, 300, 300)
+        # print(small_img.shape)
+        # return small_img
+        # 6. 人脸检测
+        faces = self._detector(small_img, 1)  # 1代表将图片放大1倍数
+        # 7. 循环，遍历每一张人脸， 绘制矩形框和关键点
+        for (i, face) in enumerate(faces):
+            shape = self._predictor(small_img, face)
+            shape = self._shape_to_np(shape)
+            for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
+                # LogUtils.log("FaceLandMark", "提取ROI..., 图像是否为空:" + str(len(img)))
+                roiEntity = self.__ROIService.getROIRealTime(nameKey, shape, img, face, scale)
+                # 根据点画出折线
+                path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
+                cv2.polylines(copy, path, True, (0, 255, 0), 4)
+                # 加上中文文字: 这个方法特别卡！
+                # copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
+                # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
+                # roi = imutils.resize(roiEntity.img, width=200, inter=cv2.INTER_CUBIC)
+                # cv2.imshow(nameKey, roiEntity.img)
+            # 画出人脸矩形
+            cv2.rectangle(copy, (face.left() * scale, face.top() * scale),
+                          (face.right() * scale, face.bottom() * scale), (255, 0, 0), 4, cv2.LINE_AA)
+        return copy
+
 
     def faceDetectByImg(self, img, scale=1, username=None, gender=None):
         # todayPath = OUTPUT_PATH + "\\" + getTodayYearMonthDayHourMinSec()
@@ -148,7 +166,7 @@ class __FaceDetect:
             fe.srcImg = img
             shape = self._predictor(small_img, face)
             # (3. 64个关键点
-            fe.landMark64 = shape
+            fe.landMark68 = shape
             shape = self._shape_to_np(shape)
             for (nameKey, name_CN) in FACIAL_LANDMARKS_NAME_DICT.items():
                 LogUtils.log("FaceLandMark", "提取ROI'" + name_CN + "...", progress=20)
@@ -197,9 +215,15 @@ faceDetection = __FaceDetect()
 
 
 def _testImage():
-    img = cv2.imread("../four_color_face_sample/black.png")
+    # img = cv2.imread("../four_color_face_sample/black.png")
+    # img = cv2.imread("../result/trimSkin.jpg")
+    img = cv2.imread("../faces/7.jpeg")
+    # img = imutils.resize(img, width=1600)
     f = faceDetection
+    pt = time.time()
     faces = f.faceDetectByImg(img)
+    et = time.time()
+    print("detect time usage:", et-pt)
     for face in faces:
         # resizedImg = imutils.resize(face.drawImg, width=800, height=800)
         resizedImg = face.drawImg
@@ -224,5 +248,5 @@ def _testVideo():
 
 
 if __name__ == '__main__':
-    # _testImage()
-    _testVideo()
+    _testImage()
+    # _testVideo()

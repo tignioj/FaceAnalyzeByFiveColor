@@ -128,8 +128,8 @@ def videoFacedetect():
     faceCascade = cv.CascadeClassifier(cascPath)
     eyeCascade = cv.CascadeClassifier(eyePath)
     smileCascade = cv.CascadeClassifier(smilePath)
-
     video_capture = cv.VideoCapture(0)
+
     while True:
         # Capture frame-by-frame
         ret, frame = video_capture.read()

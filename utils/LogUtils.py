@@ -10,7 +10,7 @@ class LogUtils:
     @staticmethod
     def log(label, msg, obj="", progress=None):
         info = "[" + getTodayYearMonthDayHourMinSec() + "]" + label + " " + msg
-        print("progressSignal:", LogUtils.progressSignal)
+        # print("progressSignal:", LogUtils.progressSignal)
         if LogUtils.progressSignal is not None:
             if progress is not None:
                 LogUtils.progressSignal.emit({'text': msg, 'type': EDIT_TEXT_TYPE_APPEND, 'progress': progress})
