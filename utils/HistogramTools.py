@@ -53,14 +53,11 @@ class HistogramTools:
         :param position 画在哪个位置
         :return:
         """
-        # font = ImageFont.truetype("../../fonts/simsun.ttc", 5)
         x = color_order
-        # plt.title("计算得到:" + color)
-        # plt.figure(figsize=(9,9))
+
         plt.xlabel('肤色指数')
         plt.ylabel('probability')
-
-        # 计算概率
+        # 正确显示负号
         plt.rcParams['axes.unicode_minus'] = False
 
         barwidth = 0.12

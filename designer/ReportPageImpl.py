@@ -159,6 +159,12 @@ class ReportPageImpl(QMainWindow, ReportPage):
         self.reportPageSignal.emit()
 
     def loadResult(self, labelDict, roiDict):
+        """
+        Load result,
+        :param labelDict:
+        :param roiDict:
+        :return:
+        """
         for (name, result) in roiDict.items():
             # labelDict[name].setText(result['text'])
             resultText = result['text']

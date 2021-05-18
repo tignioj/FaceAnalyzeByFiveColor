@@ -26,6 +26,7 @@ KEY_jia_left = "jia_left"
 KEY_jia_right = "jia_right"
 KEY_chun = "chun"
 KEY_ke = "ke"
+CAMERA_NUMBER_PORT = 2
 
 FACIAL_LANDMARKS_NAME_DICT = {
     KEY_ting: "庭",  # 额头上面

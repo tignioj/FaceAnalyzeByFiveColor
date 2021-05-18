@@ -46,17 +46,18 @@ class BackendThread:
             # 调用需要大量计算的函数
 
             if self.progressFun is not None:
-                self.progressSignal.connect(self.progressFun)
-                LogUtils.enableProgressSignal(self.progressSignal)
-                res = self.invokeFun(self.invokeParam)
-                # 执行回调函数
-                # self.signal.emit({'res': res, 'param': self.callBackParam})
-                self.signal.emit({'res': res, 'param': self.callBackParam})
-            # except Exception as err:
-                # 有可能出现异常
-                # self.signal.emit({'res': err, 'param': self.callBackParam})
-                # LogUtils.error("BackendThread-run", "出现异常！", err)
-                # self.signal.emit({'res': err, 'param': self.callBackParam})
+                try:
+                    self.progressSignal.connect(self.progressFun)
+                    LogUtils.enableProgressSignal(self.progressSignal)
+                    res = self.invokeFun(self.invokeParam)
+                    # 执行回调函数
+                    # self.signal.emit({'res': res, 'param': self.callBackParam})
+                    self.signal.emit({'res': res, 'param': self.callBackParam})
+                except Exception as err:
+                    # 有可能出现异常
+                    self.signal.emit({'res': err, 'param': self.callBackParam})
+                    LogUtils.error("BackendThread-run", "出现异常！", err)
+                    self.signal.emit({'res': err, 'param': self.callBackParam})
 
 
 

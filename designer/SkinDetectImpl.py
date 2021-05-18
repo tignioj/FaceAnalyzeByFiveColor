@@ -13,7 +13,7 @@ from core.const_var import *
 from PyQt5.QtWidgets import *
 from PyQt5.uic.properties import QtWidgets
 
-from core.const_var import SKIN_PARAM_PATH, OUTPUT_PATH
+from core.const_var import SKIN_PARAM_PATH, OUTPUT_PATH, CAMERA_NUMBER_PORT
 from utils.ImageUtils import ImgUtils
 from utils.SkinTrimUtlis import SkinTrimUtils
 
@@ -23,7 +23,7 @@ from utils.LogUtils import LogUtils
 
 
 class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
-    __IMAGE_LABEL_SIZE = (800, 400)
+    __IMAGE_LABEL_SIZE = [500, 350]
     "显示图像区域大小"
 
     "视频模式"
@@ -34,8 +34,8 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(SkinDetectImplGUI, self).__init__()
         self.setupUi(self)
-        self.CAM_NUM = 1
-        self.videoCapture = cv2.VideoCapture(self.CAM_NUM)
+        self.CAM_NUM = CAMERA_NUMBER_PORT
+        self.videoCapture = cv2.VideoCapture(self.CAM_NUM, cv2.CAP_DSHOW)
         self.cameraTimerAfter = QTimer()
         self.cameraTimerBefore = QTimer()
         self.prev_before_frame_time = 0
@@ -43,21 +43,33 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.prev_after_frame_time = 0
         self.new_after_frame_time = 0
         self.skinMode = VIDEO_Melt
-        self.initUI()
+        # self.labelResize()
         self.initRange()
         self.initSlot()
 
     def setBeforeImg(self, image):
         if image is not None:
+            self.releaseCamera()
             qpixMap = ImgUtils.nparrayToQPixMap(image, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
             largePixMap = ImgUtils.nparrayToQPixMap(image)
             self.label_show_before.setLargePixMap(largePixMap)
             self.label_show_before.setSrcImg(image)
-            self.releaseCamera()
             self.label_show_before.setPixmap(qpixMap)
             self.analyze()
 
-    def initUI(self):
+    # def resizeEvent(self, event):
+    #     # self.resized.emit()
+    #     print("resize", self.label_show_before.width(), self.label_show_before.height())
+    #     w = int(self.width() * 0.4)
+    #     h = int(self.height() * 0.3)
+    #     if w > 800: w = 800
+    #     if h > 500: h = 500
+    #     self.__IMAGE_LABEL_SIZE[0] = w
+    #     self.__IMAGE_LABEL_SIZE[1] = h
+    #     return super(SkinDetectImplGUI, self).resizeEvent(event)
+        # return super(Window, self).resizeEvent(event)
+
+    def labelResize(self):
         def setWH(label):
             label.setFixedWidth(self.__IMAGE_LABEL_SIZE[0])
             label.setFixedHeight(self.__IMAGE_LABEL_SIZE[1])
@@ -207,6 +219,12 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
             saveDict['img'] = self.label_show_after.srcImg
         else:
             saveDict['img'] = None
+
+        if self.label_show_before.srcImg is not None:
+            saveDict['srcImg'] = self.label_show_before.srcImg
+        else:
+            saveDict['srcImg'] = None
+
         self.releaseCamera()
         self.saveSignal.emit(saveDict)
 
@@ -453,8 +471,10 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
 
     def showCameraBefore(self):
         currentFrame = self.readCamera()
-        currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
-                                                                         self.__IMAGE_LABEL_SIZE[1])
+
+        currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+
+        print(self.__IMAGE_LABEL_SIZE, currentFrame.shape)
         self.label_show_before.srcImg = currentFrame
 
         self.new_before_frame_time = time.time()
@@ -470,9 +490,9 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         save = QMessageBox.question(self,
-                                               "提示",
-                                               "保存当前参数吗？",
-                                               QMessageBox.Yes | QMessageBox.No)
+                                    "提示",
+                                    "保存当前参数吗？",
+                                    QMessageBox.Yes | QMessageBox.No)
         if save == QMessageBox.Yes:
             self.saveParam()
         else:
@@ -491,7 +511,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
                 self.cameraTimerAfter.stop()
             self.appendError("相机未能成功读取到数据")
             errImg = np.ones([self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1]])
-            cv2.putText(errImg, "无法读取相机数据", (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), cv2.LINE_4)
+            cv2.putText(errImg, "无法读取相机数据", (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), cv2.LINE_4)
             return errImg
             # self.releaseCamera()
 
@@ -557,6 +577,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         self.prev_before_frame_time = self.new_before_frame_time
         s = str(currentFrame.shape[1]) + "x" + str(currentFrame.shape[0]) + ",FPS:" + re.sub(r'(.*\.\d{2}).*', r'\1',
                                                                                              str(fps))
+
         cv2.putText(currentFrame, s, (7, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_AA)
 
         # 将图像转换为pixmap
@@ -607,9 +628,9 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         LogUtils.log("GUI-openCamera", "准备打开摄像头, 更新UI的计时器状态：", self.cameraTimerBefore.isActive())
         self.appendInfo("尝试打开摄像头")
         if not self.cameraTimerBefore.isActive():
-            flag = self.videoCapture.open(self.CAM_NUM)
+            flag = self.videoCapture.open(self.CAM_NUM, cv2.CAP_DSHOW)
             if not flag:
-                QtWidgets.QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QtWidgets.QMessageBox.Ok)
+                QMessageBox.warning(self, 'warning', "请检查摄像头与电脑是否连接正确", buttons=QMessageBox.Ok)
                 self.appendError("摄像头未能成功打开！")
             else:
                 # self.cameraTimerBefore.start(20)
