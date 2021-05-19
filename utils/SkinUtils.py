@@ -1,3 +1,4 @@
+import json
 import threading
 import time
 
@@ -40,8 +41,11 @@ class HistogramException(Exception):
         self.message = message
 
 
-class SkinUtils:
+with open(SKIN_PARAM_PATH, 'r') as infile:
+    j = json.load(infile)
+paramDict = j
 
+class SkinUtils:
     @staticmethod
     def trimSkin(img):
         """
@@ -49,7 +53,7 @@ class SkinUtils:
         :param img:
         :return:
         """
-        skin, mask1, mask2 = SkinTrimUtils.rgb_hsv_ycbcr(img)
+        skin, mask1, mask2 = SkinTrimUtils.trimByParam(img, paramDict)
         return skin
         # return SkinTrimUtils.YCrCb(img)
 

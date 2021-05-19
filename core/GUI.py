@@ -20,6 +20,7 @@ from designer.GUIDesigner import *
 from core.faceHealthDetect import *
 from FaceLandMark import faceDetection
 from utils.LogUtils import LogUtils
+from utils.SkinTrimUtlis import SkinTrimUtils
 from utils.SkinUtils import SkinUtils
 
 
@@ -224,6 +225,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         if skinImg is not None:
             self.appendInfo("检测到返回的肤色提取照片, 已经加载到Label中, 大小:" + str(skinImg.shape))
             self.labelImageState = self.__IMAGE_LABEL_STATE_USING_SKINTRIMED
+            self.button_analyze.setEnabled(True)
             self.radioButton_SkinDetect.click()
             self.skinImage = skinImg
             self.setNumpyArrayImgToImageShowLabel(skinImg)
@@ -553,6 +555,11 @@ class MainGUI(QMainWindow, Ui_MainWindow):
         self.actionOpenCamera.setEnabled(b)
         self.actionCloseCamera.setEnabled(b)
         self.actionReset.setEnabled(b)
+
+        self.radioButton_SkinDetect.setEnabled(b)
+        self.radioButton_FaceTract.setEnabled(b)
+        self.radioButton_NormalImage.setEnabled(b)
+
         self.button_seeReport.setEnabled(b)
         self.pushButton_skinParamPage.setEnabled(b)
 
@@ -574,7 +581,7 @@ class MainGUI(QMainWindow, Ui_MainWindow):
 
         self.button_analyze.setEnabled(False)
         self.button_seeReport.setEnabled(False)
-        self.pushButton_skinParamPage(False)
+        self.pushButton_skinParamPage.setEnabled(False)
 
         self.showInfo("工作区重置成功！")
         self.loadProcessImg()
