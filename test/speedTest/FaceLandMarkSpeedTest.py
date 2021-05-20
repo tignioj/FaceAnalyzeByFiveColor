@@ -10,7 +10,6 @@ def _testROIDraw():
     et = time.time()
     print("detect time usage:", et - pt)
     reports = ReportService.generateReports(faces)
-
     et2 = time.time()
     print("report time usage:", et2 - et)
 

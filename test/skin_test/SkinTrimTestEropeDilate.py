@@ -24,7 +24,7 @@ import imutils
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.hsv_rgb_ycrcb import Skin_Detect
-from utils.ImageUtils import cvshow
+from utils.ImageUtils import ImgUtils
 
 
 class SkinTrimUtilsTest:
@@ -305,7 +305,7 @@ def testImage():
     # cv2.imshow('hsv', SkinTrimUtilsTest.hsv(frame.copy()))
     # cv2.imshow('yCrCb', SkinTrimUtilsTest.YCrCb(frame.copy()))
     # cv2.imshow('lab result', SkinTrimUtilsTest.Lab(frame.copy()))
-    cv2.imshow('rgb_hsv_ycbcr', SkinTrimUtilsTest.rgb_hsv_ycbcr(frame.copy()))
+    # cv2.imshow('rgb_hsv_ycbcr', SkinTrimUtilsTest.rgb_hsv_ycbcr(frame.copy()))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 

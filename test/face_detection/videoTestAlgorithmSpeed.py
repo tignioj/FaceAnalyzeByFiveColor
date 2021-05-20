@@ -7,6 +7,7 @@ import time
 
 # from face_detect_mtcnn import faceDetectMTCNN
 from face_detect_haar import faceDetectHaar
+# from face_detect_mtcnn import faceDetectMTCNN
 
 scale = 6
 
@@ -18,7 +19,7 @@ def detectFace(img):
 
 
 def _testVideo():
-    video_capture = cv2.VideoCapture(1)
+    video_capture = cv2.VideoCapture(0)
     # used to record the time when we processed last frame
     prev_frame_time = 0
     # used to record the time at which we processed current frame
@@ -38,7 +39,9 @@ def _testVideo():
             break
         # small_frame = cv2.resize(frame, (0, 0), fx=1 / scale, fy=1 / scale)
         new_frame_time = time.time()
-        fps = 1 / (new_frame_time - prev_frame_time)
+        d = (new_frame_time - prev_frame_time)
+        if d == 0: d = 1
+        fps = 1 / d
         k += 1
         averageFPS += fps
 

@@ -176,19 +176,21 @@ class ReportPageImpl(QMainWindow, ReportPage):
             sampleImg = diffImg['sample']
             sampleImgTrim = diffImg['sampleTrim']
 
-            p, s = ImgUtils.keepSameShape(predictImg, sampleImg)
-            pt, st = ImgUtils.keepSameShape(predictImgTrim, sampleImgTrim)
+            # p, s = ImgUtils.keepSameShape(predictImg, sampleImg)
+            p = cv2.resize(predictImg, (sampleImg.shape[1], sampleImg.shape[0]))
+            pt = cv2.resize(predictImgTrim, (sampleImgTrim.shape[1], sampleImgTrim.shape[0]))
 
             LogUtils.log("ReportPageImpl", "组合图片中..")
             p = ImgUtils.putTextCN(p, "预测:" + ImgUtils.COLOR_SAMPLE_CN_NAME_BY_KEY[resultColor], (1, 1), COLORDICT['blue'])
-            s = ImgUtils.putTextCN(s, "样本", (1, 1), COLORDICT['green'])
+            s = ImgUtils.putTextCN(sampleImg, "样本", (1, 1), COLORDICT['green'])
 
             pt = ImgUtils.putTextCN(pt, "提纯后", (1, 1), COLORDICT['blue'])
-            st = ImgUtils.putTextCN(st, "提纯后", (1, 1), COLORDICT['green'])
+            st = ImgUtils.putTextCN(sampleImgTrim, "提纯后", (1, 1), COLORDICT['green'])
 
-            combineImgRow1 = np.vstack([p, s])
-            combineImgRow2 = np.vstack([pt, st])
-            combineImg = np.hstack([combineImgRow1, combineImgRow2])
+            combineImgRow1 = np.hstack([p, pt])
+            combineImgRow2 = np.hstack([s, st])
+            # combineImgRow1 = cv2.resize(combineImgRow1, (combineImgRow2.shape[1], combineImgRow2.shape[0]))
+            combineImg = np.vstack([combineImgRow1, combineImgRow2])
             LogUtils.log("ReportPageImpl", "组合图片完毕..")
 
             LogUtils.log("ReportPageImpl", "正在加载'" + FACIAL_LANDMARKS_NAME_DICT[name] + "'的结果, 对比图大小" + str(combineImg.shape))

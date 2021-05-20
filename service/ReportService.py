@@ -1,8 +1,5 @@
 import os
 
-import pdfkit
-from docx import Document
-
 from multiprocessing import Pool
 
 from matplotlib import pyplot as plt
@@ -15,9 +12,6 @@ from utils.DistanceUtils import DistanceUtils
 from utils.HistogramTools import HistogramTools
 from entity.ReportEntity import ReportEntity
 from utils.MyDateUtils import *
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.shared import Inches, Pt, RGBColor
-from docx.oxml.ns import qn
 from numpy import doc
 from win32com.client import gencache, constants
 from core.const_var import *
@@ -135,6 +129,7 @@ class ReportService:
             for (name, roi) in items:
                 nameCN = FACIAL_LANDMARKS_NAME_DICT[name]
                 LogUtils.log("ReportService", "线程正在为" + nameCN + "绘图中... ", progress=currentProgress)
+
                 drawItems = result[name].get()
                 report.roiRGBDict[name] = drawItems['rgb']
                 report.roiHSVDict[name] = drawItems['hsv']

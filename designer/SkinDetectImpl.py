@@ -67,7 +67,7 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
     #     self.__IMAGE_LABEL_SIZE[0] = w
     #     self.__IMAGE_LABEL_SIZE[1] = h
     #     return super(SkinDetectImplGUI, self).resizeEvent(event)
-        # return super(Window, self).resizeEvent(event)
+    # return super(Window, self).resizeEvent(event)
 
     def labelResize(self):
         def setWH(label):
@@ -472,7 +472,8 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
     def showCameraBefore(self):
         currentFrame = self.readCamera()
 
-        currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0], self.__IMAGE_LABEL_SIZE[1])
+        currentFrame = SkinDetectImplGUI.changeFrameByLableSizeKeepRatio(currentFrame, self.__IMAGE_LABEL_SIZE[0],
+                                                                         self.__IMAGE_LABEL_SIZE[1])
 
         print(self.__IMAGE_LABEL_SIZE, currentFrame.shape)
         self.label_show_before.srcImg = currentFrame
@@ -573,7 +574,9 @@ class SkinDetectImplGUI(QMainWindow, Ui_MainWindow):
         trimedImg = currentFrame.copy()
         # 计算FPS
         self.new_before_frame_time = time.time()
-        fps = 1 / (self.new_before_frame_time - self.prev_before_frame_time)
+        interval = self.new_before_frame_time - self.prev_before_frame_time
+        if interval == 0: interval = 1
+        fps = 1 / interval
         self.prev_before_frame_time = self.new_before_frame_time
         s = str(currentFrame.shape[1]) + "x" + str(currentFrame.shape[0]) + ",FPS:" + re.sub(r'(.*\.\d{2}).*', r'\1',
                                                                                              str(fps))

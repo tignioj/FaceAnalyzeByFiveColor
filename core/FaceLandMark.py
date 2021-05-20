@@ -133,7 +133,7 @@ class __FaceDetect:
                 path = [roiEntity.roiRectanglePoints.reshape((-1, 1, 2))]
                 cv2.polylines(copy, path, True, (0, 255, 0), 4)
                 # 加上中文文字: 这个方法特别卡！
-                # copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
+                copy = self._putTextCN(copy, roiEntity.centerPoint, name_CN, face)
                 # cv2.putText(copy, nameKey[0], (roiEntity.centerPoint[0], roiEntity.centerPoint[1]), cv2.FONT_HERSHEY_SIMPLEX, 1, (100, 255, 0), 3, cv2.LINE_4)
                 # roi = imutils.resize(roiEntity.img, width=200, inter=cv2.INTER_CUBIC)
                 # cv2.imshow(nameKey, roiEntity.img)

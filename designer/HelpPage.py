@@ -24,8 +24,6 @@ class Ui_MainWindow(object):
         self.label = MyQImgLabel(self.centralwidget)
         self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
-
-
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 

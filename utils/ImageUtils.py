@@ -58,27 +58,45 @@ class ImgUtils:
         :return: blackSample, yellowSample, redSample, whiteSample
         """
         black_sample_dict = {}
-        yellow_sample_dict = {}
+        black_sample_dict_trim = {}
+
+        yellow_sample_dict= {}
+        yellow_sample_dict_trim = {}
+
         red_sample_dict = {}
+        red_sample_dict_trim = {}
+
         white_sample_dict = {}
+        white_sample_dict_trim = {}
         for roiName in FACIAL_LANDMARKS_NAME_DICT.keys():
             LogUtils.log("ImageUtils",
                          "正在加载" + FACIAL_LANDMARKS_NAME_DICT[
                              roiName] + "的样本图像数据" + ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_BLACK + "/" + roiName + ".jpg")
-            black_sample_dict[roiName] = ImgUtils.getImg(
-                ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_BLACK + "/" + roiName + ".jpg")
-            yellow_sample_dict[roiName] = ImgUtils.getImg(
-                ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_YELLOW + "/" + roiName + ".jpg")
-            red_sample_dict[roiName] = ImgUtils.getImg(
-                ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_RED + "/" + roiName + ".jpg")
-            white_sample_dict[roiName] = ImgUtils.getImg(
-                ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_WHITE + "/" + roiName + ".jpg")
+
+            black_sample_dict[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_BLACK + "/" + roiName + ".jpg")
+            black_sample_dict_trim[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_BLACK + "/" + roiName + "_trim.jpg")
+
+            yellow_sample_dict[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_YELLOW + "/" + roiName + ".jpg")
+            yellow_sample_dict_trim[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_YELLOW + "/" + roiName + "_trim.jpg")
+
+            red_sample_dict[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_RED + "/" + roiName + ".jpg")
+            red_sample_dict_trim[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_RED + "/" + roiName + "_trim.jpg")
+
+            white_sample_dict[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_WHITE + "/" + roiName + ".jpg")
+            white_sample_dict_trim[roiName] = ImgUtils.getImg( ImgUtils.SAMPLE_PATH + "/" + ImgUtils.KEY_SAMPLE_WHITE + "/" + roiName + "_trim.jpg")
 
         sampleDict = {
             ImgUtils.KEY_SAMPLE_RED: red_sample_dict,
+            ImgUtils.KEY_SAMPLE_RED + "_trim": red_sample_dict_trim,
+
             ImgUtils.KEY_SAMPLE_WHITE: white_sample_dict,
+            ImgUtils.KEY_SAMPLE_WHITE + "_trim": white_sample_dict_trim,
+
             ImgUtils.KEY_SAMPLE_BLACK: black_sample_dict,
-            ImgUtils.KEY_SAMPLE_YELLOW: yellow_sample_dict
+            ImgUtils.KEY_SAMPLE_BLACK + "_trim": black_sample_dict_trim,
+
+            ImgUtils.KEY_SAMPLE_YELLOW: yellow_sample_dict,
+            ImgUtils.KEY_SAMPLE_YELLOW + "_trim": yellow_sample_dict_trim
         }
         return sampleDict
 
@@ -177,3 +195,7 @@ class ImgUtils:
     @staticmethod
     def changeFrameByLableSizeKeepRatio(frame, fixW, fixH):
         return imutils.resize(frame, width=fixW, height=fixH)
+
+if __name__ == '__main__':
+    d = ImgUtils.getSampleDict()
+    print(d)

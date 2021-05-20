@@ -18,15 +18,15 @@ class HistogramTools:
     @staticmethod
     def _getProbability(arr):
         # return softmax(arr)
-        return HistogramTools._norm(arr)
-        # return original(arr)
+        # return HistogramTools._norm(arr)
+        # return HistogramTools._myNorm(arr)
+        return HistogramTools._original(arr)
         # return normAndSf(arr)
 
     @staticmethod
     def _original(arr):
         a = np.asarray(arr)
-        # return softmax(1 - a / sum(a))
-        return 1 - a / sum(a)
+        return a / sum(a)
 
     @staticmethod
     def _norm(arr):
@@ -63,8 +63,8 @@ class HistogramTools:
         barwidth = 0.12
         bias = position * barwidth
         x1 = np.asarray(list(range(len(x)))) + bias  # [0,1,2,3]
-        # y1 = HistogramTools._getProbability(array)
-        y1 = array
+        y1 = HistogramTools._getProbability(array)
+        # y1 = array
         plt.rcParams['font.sans-serif'] = ['SimHei']
         # 设置x轴刻度
         plt.xticks(x1, x)
@@ -99,6 +99,13 @@ class HistogramTools:
             sampleDict[ImgUtils.KEY_SAMPLE_BLACK], sampleDict[ImgUtils.KEY_SAMPLE_YELLOW], sampleDict[
                 ImgUtils.KEY_SAMPLE_RED], sampleDict[
                 ImgUtils.KEY_SAMPLE_WHITE]
+
+        black_sample_dict_trim, yellow_sample_dict_trim, red_sample_dict_trim, white_sample_dict_trim = \
+            sampleDict[ImgUtils.KEY_SAMPLE_BLACK + "_trim"], sampleDict[ImgUtils.KEY_SAMPLE_YELLOW + "_trim"], \
+            sampleDict[
+                ImgUtils.KEY_SAMPLE_RED + "_trim"], sampleDict[
+                ImgUtils.KEY_SAMPLE_WHITE + "_trim"]
+
         # 要预测的图片
         # predict = getImg("../../result/predict3_white/ting.jpg")
         # predict = getImg("../../result/chi/ting.jpg")
@@ -113,16 +120,16 @@ class HistogramTools:
         predictTrim = SkinUtils.trimSkin(predict)
 
         sampleBlack = black_sample_dict[keyName]
-        sampleBlackTrim = SkinUtils.trimSkin(sampleBlack)
+        sampleBlackTrim = black_sample_dict_trim[keyName]
 
         sampleYellow = yellow_sample_dict[keyName]
-        sampleYellowTrim = SkinUtils.trimSkin(sampleYellow)
+        sampleYellowTrim = yellow_sample_dict_trim[keyName]
 
         sampleRed = red_sample_dict[keyName]
-        sampleRedTrim = SkinUtils.trimSkin(sampleRed)
+        sampleRedTrim = red_sample_dict_trim[keyName]
 
         sampleWhite = white_sample_dict[keyName]
-        sampleWhiteTrim = SkinUtils.trimSkin(sampleWhite)
+        sampleWhiteTrim = white_sample_dict_trim[keyName]
         LogUtils.log("HistogramTools", keyNameCN + "提纯完毕...")
 
         distanceDict = DistanceUtils.getDistArray(predictTrim,

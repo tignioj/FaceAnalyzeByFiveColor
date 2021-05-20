@@ -5,6 +5,8 @@ import dlib, os
 
 # 方法 显示图片
 from core.const_var import COLORDICT
+
+
 # 方法：绘制人脸矩形框
 def plot_rectangle(image, faces, scale):
     for face in faces:
@@ -15,8 +17,11 @@ def plot_rectangle(image, faces, scale):
                       4)
 
     return image
+
+
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("../../model/face_landmark/shape_predictor_68_face_landmarks.dat")
+
 
 def faceDetectHog(img, scale=1):
     small_img = cv2.resize(img, (0, 0), fx=1 / scale, fy=1 / scale)
@@ -24,9 +29,16 @@ def faceDetectHog(img, scale=1):
     # 调用dlib库中的检测器
     faces = detector(small_img, 1)  # 1代表将图片放大1倍数
 
+    for face in faces:
+        shape = predictor(small_img, face)
+        for point in shape.parts():
+            x = int(point.x * scale)
+            y = int(point.y * scale)
+            cv2.circle(img, (x, y), 3, (0, 0, 255), -1)
+
     plot_rectangle(img, faces, scale)
     et = time.time()
-    print("人脸检测时长:", et-pt, "图片大小:", img.shape)
+    print("人脸检测时长:", et - pt, "图片大小:", img.shape)
 
     return img
 

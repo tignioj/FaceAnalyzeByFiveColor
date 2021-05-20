@@ -24,7 +24,7 @@ import imutils
 import numpy as np
 import matplotlib.pyplot as plt
 from utils.hsv_rgb_ycrcb import Skin_Detect
-from utils.ImageUtils import cvshow
+from utils.ImageUtils import ImgUtils
 
 
 class SkinTrimUtilsTestByStep:
@@ -192,7 +192,7 @@ def putTextTo(img, text):
 
 def showImage(frame, title=None):
     # frame = cv2.imread("../../faces/7.jpeg")
-    frame = imutils.resize(frame, width=490)
+    frame = imutils.resize(frame, width=300)
     cv2.imshow("original_" + title, frame)
     melt = SkinTrimUtilsTestByStep.getColorSpaceMask(frame, SkinTrimUtilsTestByStep.COLOR_SPACE_RGB_HSV_YCrCb)
     putTextTo(melt, "melt")
@@ -216,7 +216,7 @@ videoCapture = cv2.VideoCapture(1)
 def testImage():
     showImage(cv2.imread("../../faces/7.jpeg"), "1")
     showImage(cv2.imread("../../faces/white.jpg"), "2")
-    showImage(cv2.imread("../../faces/dark.jpg"), "3")
+    showImage(cv2.imread("../../faces/deepdark.jpg"), "3")
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
