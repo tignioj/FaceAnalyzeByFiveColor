@@ -1,6 +1,8 @@
+import os
+
 import numpy as np
 
-BASE_PATH = r"F:\program\FaceAnalyzeByFiveColor"
+BASE_PATH = os.path.abspath("../")
 SKIN_PARAM_PATH = BASE_PATH + "\\designer\\param.json"
 OUTPUT_PATH = BASE_PATH + "\\result"
 # OPENCV_CASCADE_PATH = "G:\\PyCharmProgram\\FaceDetection\\FaceDetect"
