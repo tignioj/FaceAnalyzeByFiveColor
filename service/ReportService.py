@@ -13,7 +13,6 @@ from utils.HistogramTools import HistogramTools
 from entity.ReportEntity import ReportEntity
 from utils.MyDateUtils import *
 from numpy import doc
-from win32com.client import gencache, constants
 from core.const_var import *
 import cv2
 

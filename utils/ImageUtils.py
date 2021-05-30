@@ -30,7 +30,7 @@ class ImgUtils:
     KEY_SAMPLE_RED = "chi"
     KEY_SAMPLE_BLACK = "black"
     KEY_SAMPLE_WHITE = "white"
-    SAMPLE_PATH = BASE_PATH + "\\four_color_face_sample"
+    SAMPLE_PATH = BASE_PATH + "/four_color_face_sample"
 
     COLOR_SAMPLE_CN_NAME_BY_KEY = {
         KEY_SAMPLE_WHITE: '白',

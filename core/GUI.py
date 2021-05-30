@@ -1,4 +1,6 @@
 import json
+import multiprocessing
+import platform
 import random
 import re
 import time
@@ -606,6 +608,8 @@ class MainGUI(QMainWindow, Ui_MainWindow):
 
 
 if __name__ == '__main__':
+    if platform.system() == "Darwin":
+        multiprocessing.set_start_method('spawn')
     app = QApplication(sys.argv)
     myWin = MainGUI()
     myWin.setWindowTitle("人脸像素统计与分析软件")

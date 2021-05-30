@@ -3,11 +3,11 @@ import os
 import numpy as np
 
 BASE_PATH = os.path.abspath("../")
-SKIN_PARAM_PATH = BASE_PATH + "\\designer\\param.json"
-OUTPUT_PATH = BASE_PATH + "\\result"
+SKIN_PARAM_PATH = BASE_PATH + "/designer/param.json"
+OUTPUT_PATH = BASE_PATH + "/result"
 # OPENCV_CASCADE_PATH = "G:\\PyCharmProgram\\FaceDetection\\FaceDetect"
 OPENCV_CASCADE_PATH = r"D:\software\PyCharm\envs\deepLearningpy37\Lib\site-packages\cv2\data"
-FONT_PATH = BASE_PATH + "\\fonts\\simsun.ttc"
+FONT_PATH = BASE_PATH + "/fonts/simsun.ttc"
 COLORDICT = {'blue': (255, 0, 0),
              'green': (0, 255, 0),
              'red': (0, 0, 255),

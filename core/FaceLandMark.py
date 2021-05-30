@@ -28,7 +28,7 @@ class __FaceDetect:
 
         # 4. 加载预测关键点模型(68个点)
         self._predictor = dlib.shape_predictor(
-            BASE_PATH + "\\model\\face_landmark\\shape_predictor_68_face_landmarks.dat")
+            BASE_PATH + "/model/face_landmark/shape_predictor_68_face_landmarks.dat")
 
     def _shape_to_np(self, shape, dtype="int"):
         # initialize the list of (x, y)-coordinates
@@ -47,7 +47,7 @@ class __FaceDetect:
         faceW = face.bottom() - face.top()
         # fontpath = "simsun.ttc"  # <== 这里是宋体路径
         font_size = int(round(faceW * 0.1))
-        font = ImageFont.truetype("simsun.ttc", font_size)
+        font = ImageFont.truetype(FONT_PATH, font_size)
         img_pil = Image.fromarray(img)
         draw = ImageDraw.Draw(img_pil)
 
